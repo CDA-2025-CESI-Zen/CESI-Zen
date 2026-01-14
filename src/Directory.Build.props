@@ -1,0 +1,5 @@
+<Project>
+  <ItemGroup>
+    <ProjectReference Include="$(SolutionDir)\shared\FluentResponse\FluentResponse.csproj" />
+  </ItemGroup>
+</Project>
