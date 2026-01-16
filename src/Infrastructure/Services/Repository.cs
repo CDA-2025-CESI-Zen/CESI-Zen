@@ -8,7 +8,7 @@ using FluentResponse.Interfaces;
 using CesiZen.Domain.Aggregates.Core;
 using CesiZen.Infrastructure.Core.Exceptions;
 
-namespace CesiZen.Infrastructure.Repositories;
+namespace CesiZen.Infrastructure.Services;
 public class Repository<T>(
     DbContext              dbContext,
     IDomainEventDispatcher domainEventDispatcher
