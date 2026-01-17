@@ -37,4 +37,6 @@ public abstract class CacheService<TKey, TValue> : ICacheService<TKey, TValue>
                 : Response.Failure(new KeyNotFoundException($"Il n'y a pas de d'entrée dans le cache avec la clé `{key}` !"));
 
         public void Clear() => this.Cache.Clear();
+
+    #endregion
 }
