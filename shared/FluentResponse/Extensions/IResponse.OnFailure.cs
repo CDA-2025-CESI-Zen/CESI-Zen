@@ -1,10 +1,6 @@
 using FluentResponse.Interfaces;
 
 namespace FluentResponse;
-
-/// <summary>
-/// Extension methods class.
-/// </summary>
 public static partial class Extensions {
 
     /// <summary>
@@ -12,7 +8,6 @@ public static partial class Extensions {
     /// </summary>
     /// <param name="self">The current response.</param>
     /// <param name="onFailure">A function called with the response's exception as argument.</param>
-    /// <returns>A response for method chaining.</returns>
     public static T OnFailure<T>(
         this T self,
         Func<Exception, T> onFailure
@@ -26,7 +21,6 @@ public static partial class Extensions {
     /// </summary>
     /// <param name="self">The current response.</param>
     /// <param name="onFailure">A function called with the response's exception as argument.</param>
-    /// <returns>A response for method chaining.</returns>
     public static T OnFailure<T>(
         this T self,
         Action<Exception> onFailure

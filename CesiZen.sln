@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CesiZen.Domain.Tests", "tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CesiZen.Infrastructure", "src\Infrastructure\CesiZen.Infrastructure.csproj", "{F4E045D8-1118-4CDC-9870-96A37CB56094}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CesiZen.Application", "src\Application\CesiZen.Application.csproj", "{D31B0DB0-3AC1-4731-B450-8ACFA7CDB052}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{F4E045D8-1118-4CDC-9870-96A37CB56094}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F4E045D8-1118-4CDC-9870-96A37CB56094}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F4E045D8-1118-4CDC-9870-96A37CB56094}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D31B0DB0-3AC1-4731-B450-8ACFA7CDB052}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D31B0DB0-3AC1-4731-B450-8ACFA7CDB052}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D31B0DB0-3AC1-4731-B450-8ACFA7CDB052}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D31B0DB0-3AC1-4731-B450-8ACFA7CDB052}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -48,5 +54,6 @@ Global
 		{0AD78F6E-B2D5-40F9-98F8-A8CE84DCC1EA} = {527907CC-A990-422E-A44B-9BFA24321AB8}
 		{C2A407F5-09C6-43B2-8C91-DA5361C07FB0} = {CE43E98C-F191-467A-B703-B12AEE47E4C8}
 		{F4E045D8-1118-4CDC-9870-96A37CB56094} = {527907CC-A990-422E-A44B-9BFA24321AB8}
+		{D31B0DB0-3AC1-4731-B450-8ACFA7CDB052} = {527907CC-A990-422E-A44B-9BFA24321AB8}
 	EndGlobalSection
 EndGlobal

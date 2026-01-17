@@ -1,4 +1,3 @@
-global using Id = ulong;
 using FluentResponse.Interfaces;
 namespace CesiZen.Domain.Aggregates.Core;
 public abstract record AggregateRoot<T>(Id Id = default) where T : AggregateRoot<T> {

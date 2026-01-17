@@ -3,12 +3,7 @@ using FluentResponse.Interfaces;
 namespace FluentResponse;
 public static partial class Extensions {
 
-    /// <summary>
-    /// Runs a function if it is successful and propagates the return value.
-    /// </summary>
-    /// <param name="self">The current response.</param>
-    /// <param name="onSuccess">A function called when the response is successful and returns a response of the same type.</param>
-    /// <returns>A response for method chaining.</returns>
+    /// <inheritdoc cref="OnSuccess(IResponse, Func{IResponse})"/>
     public static async Task<IResponse> OnSuccessAsync(
         this IResponse self,
         Func<Task<IResponse>> onSuccess
@@ -16,12 +11,7 @@ public static partial class Extensions {
             ? await onSuccess()
             : self;
 
-    /// <summary>
-    /// Runs a function if it is successful.
-    /// </summary>
-    /// <param name="self">The current response.</param>
-    /// <param name="onSuccess">A function called when the response is successful.</param>
-    /// <returns>A response for method chaining.</returns>
+    /// <inheritdoc cref="OnSuccess(IResponse, Action)"/>
     public static async Task<IResponse> OnSuccessAsync(
         this IResponse self,
         Func<Task> onSuccess
@@ -30,14 +20,7 @@ public static partial class Extensions {
         return self;
     }
 
-    /// <summary>
-    /// Runs a function if it is successful and propagates the return value.
-    /// </summary>
-    /// <typeparam name="TValue">The response's value type.</typeparam>
-    /// <param name="self">The current response.</param>
-    /// <param name="onSuccess">A function called when the response is successful and returns a response of the same type.</param>
-    /// <returns>A response for method chaining.</returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <inheritdoc cref="OnSuccess{T}(IResponse, Func{IResponse{T}})"/>
     public static async Task<IResponse<TValue>> OnSuccessAsync<TValue>(
         this IResponse self,
         Func<Task<IResponse<TValue>>> onSuccess
@@ -47,12 +30,7 @@ public static partial class Extensions {
             _                => throw new InvalidOperationException()
         };
 
-    /// <summary>
-    /// Runs a function if it is successful and propagates the return value.
-    /// </summary>
-    /// <typeparam name="TValue">The response's value type.</typeparam>
-    /// <returns>A response for method chaining.</returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <inheritdoc cref="OnSuccess{T}(IResponse, Func{T})"/>
     public static  async Task<IResponse<TValue>> OnSuccessAsync<TValue>(
         this IResponse self,
         Func<Task<TValue>> onSuccess

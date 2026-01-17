@@ -8,7 +8,6 @@ public static partial class Extensions {
     /// </summary>
     /// <param name="self">The current response.</param>
     /// <param name="onSuccess">A function called when the response is successful and returns a response of the same type.</param>
-    /// <returns>A response for method chaining.</returns>
     public static IResponse OnSuccess(
         this IResponse  self,
         Func<IResponse> onSuccess
@@ -21,7 +20,6 @@ public static partial class Extensions {
     /// </summary>
     /// <param name="self">The current response.</param>
     /// <param name="onSuccess">A function called when the response is successful.</param>
-    /// <returns>A response for method chaining.</returns>
     public static IResponse OnSuccess(
         this IResponse self,
         Action onSuccess
@@ -36,7 +34,6 @@ public static partial class Extensions {
     /// <typeparam name="TValue">The response's value type.</typeparam>
     /// <param name="self">The current response.</param>
     /// <param name="onSuccess">A function called when the response is successful and returns a response of the same type.</param>
-    /// <returns>A response for method chaining.</returns>
     /// <exception cref="InvalidOperationException"></exception>
     public static IResponse<TValue> OnSuccess<TValue>(
         this IResponse self,
@@ -51,7 +48,6 @@ public static partial class Extensions {
     /// Runs a function if it is successful and propagates the return value.
     /// </summary>
     /// <typeparam name="TValue">The response's value type.</typeparam>
-    /// <returns>A response for method chaining.</returns>
     /// <exception cref="InvalidOperationException"></exception>
     public static IResponse<TValue> OnSuccess<TValue>(
         this IResponse self,

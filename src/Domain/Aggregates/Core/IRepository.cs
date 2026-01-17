@@ -6,6 +6,7 @@ public interface IRepository<T> where T : AggregateRoot<T> {
 
     Task<IResponse<T>> TryAddAsync(T entity);
     Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, T> changes);
+    Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, IResponse<T>> changes);
     Task<IResponse<T>> TryUpdateAsync(Id id, T entity);
     Task<IResponse> TryDeleteAsync(T entity);
     Task<IResponse> TryDeleteAsync(Id id);

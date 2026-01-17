@@ -1,5 +1,3 @@
-global using Id = ulong;
-
 using System.Data;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +46,16 @@ public class Repository<T>(
         public virtual Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, T> changes) =>
             this.TryGetAsync(id).OnSuccessAsync(oldEntity =>
                 this.TryValidateAsync(changes(oldEntity)).OnSuccessAsync(async entity => {
+
+                    this.table.Entry(oldEntity).CurrentValues.SetValues(entity);
+                    await this.dbContext.SaveChangesAsync();
+                
+                })
+            );
+
+        public virtual Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, IResponse<T>> changes) =>
+            this.TryGetAsync(id).OnSuccessAsync(oldEntity =>
+                changes(oldEntity).OnSuccessAsync(this.TryValidateAsync).OnSuccessAsync(async entity => {
 
                     this.table.Entry(oldEntity).CurrentValues.SetValues(entity);
                     await this.dbContext.SaveChangesAsync();

@@ -3,12 +3,7 @@ using FluentResponse.Interfaces;
 namespace FluentResponse;
 public static partial class Extensions {
 
-    /// <summary>
-    /// Runs a function with the response's exception as argument if it is not successful and propagates the return value.
-    /// </summary>
-    /// <param name="self">The current response.</param>
-    /// <param name="onFailure">A function called with the response's exception as argument.</param>
-    /// <returns>A response for method chaining.</returns>
+    /// <inheritdoc cref="OnFailure{T}(T, Func{Exception, T})"/>
     public static async Task<T> OnFailureAsync<T>(
         this T self,
         Func<Exception, Task<T>> onFailure
@@ -17,12 +12,7 @@ public static partial class Extensions {
             ? await onFailure(failure.Exception)
             : self;
 
-    /// <summary>
-    /// Runs a function with the response's exception as argument if it is not successful.
-    /// </summary>
-    /// <param name="self">The current response.</param>
-    /// <param name="onFailure">A function called with the response's exception as argument.</param>
-    /// <returns>A response for method chaining.</returns>
+    /// <inheritdoc cref="OnFailure{T}(T, Action{Exception})"/>
     public static async Task<T> OnFailureAsync<T>(
         this T self,
         Func<Exception, Task> onFailure
