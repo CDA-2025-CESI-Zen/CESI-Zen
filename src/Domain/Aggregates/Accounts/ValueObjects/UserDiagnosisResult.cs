@@ -1,4 +1,4 @@
 namespace CesiZen.Domain.Aggregates.Accounts.ValueObjects;
-public readonly record struct UserDiagnosisResult(int Score) {
-    public DateOnly Date { get; init; } = DateOnly.FromDateTime(DateTime.Now);
+public readonly record struct UserDiagnosisResult(int Score, DateTime Date) {
+    public UserDiagnosisResult(int score) : this(score, DateTime.Now) {}
 }

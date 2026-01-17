@@ -8,8 +8,8 @@ using CesiZen.Infrastructure.Core.Exceptions;
 
 namespace CesiZen.Infrastructure.Services;
 public class Repository<T>(
-    DbContext              dbContext,
-    IDomainEventDispatcher domainEventDispatcher
+    DbContext              dbContext
+    //IDomainEventDispatcher domainEventDispatcher
 ) : IRepository<T> where T : AggregateRoot<T> {
 
     #region PROPERTIES
@@ -26,7 +26,7 @@ public class Repository<T>(
                     return failure;
 
             entity = entity.WithConsumedEvents(out var domainEvents);
-            await domainEventDispatcher.DispatchAsync(domainEvents);
+            //await domainEventDispatcher.DispatchAsync(domainEvents);
 
             return Response.Success(entity);
         }

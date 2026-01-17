@@ -9,8 +9,8 @@ public record Admin : AggregateRoot<Admin> {
 
     #region PROPERTIES
 
-        public    AdminMailAddress MailAddress { get; protected init; } = null!;
-        protected Password         Password    { get; init; }
+        public AdminMailAddress MailAddress { get; protected init; } = null!;
+        public Password         Password    { get; protected init; }
 
         public override Func<IRepository<Admin>, Task<IResponse<Admin>>>? RepositoryInvariant => async (repository) => 
             this.MailAddress?.Address is string mailAddress && await repository.AnyAsync((x) =>
@@ -54,10 +54,7 @@ public record Admin : AggregateRoot<Admin> {
                 .OnSuccess(password => this with { Password = password });
 
         public IResponse TryVerifyPassword(string value) =>
-            this.Password.Verify(value) switch {
-                true  => Response.Success(),
-                false => Response.Failure("Mot de passe incorrect !"),
-            };
+            this.Password.TryVerify(value);
 
     #endregion
     

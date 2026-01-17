@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 namespace CesiZen.Infrastructure.Services;
 public sealed class PasswordResetCacheService(
     TimeSpan passwordResetRequestExpiry
-) : CacheService<ulong, PIN> {
+) : CacheService<Id, PIN>, IPasswordResetCacheService {
 
     public override TimeSpan CacheDuration { get; } = passwordResetRequestExpiry;
 

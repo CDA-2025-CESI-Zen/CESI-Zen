@@ -9,8 +9,8 @@ public record User : AggregateRoot<User> {
 
     #region PROPERTIES
 
-        public    UserMailAddress? MailAddress { get; protected init; }
-        protected Password?        Password    { get; init; }
+        public UserMailAddress? MailAddress { get; protected init; }
+        public Password         Password    { get; protected init; }
 
         public DateTime FirstActivity { get; protected init; } = DateTime.Now;
         public DateTime LastActivity  { get; protected init; } = DateTime.Now;
@@ -20,7 +20,7 @@ public record User : AggregateRoot<User> {
 
         public DateTime? AnonymizationProcessStartedAt { get; protected init; }
 
-        public bool IsAnonymous => this.MailAddress is null || this.Password is null;
+        public bool IsAnonymous => this.MailAddress is null;
 
         public override Func<IRepository<User>, Task<IResponse<User>>>? RepositoryInvariant => async (repository) => 
             this.MailAddress?.Address is string mailAddress && await repository.AnyAsync((x) =>
@@ -43,7 +43,7 @@ public record User : AggregateRoot<User> {
             string password
         ) => UserMailAddress
             .TryCreate(mailAdress)
-            .OnSuccess(mailAdress => ValueObjects.Password
+            .OnSuccess(mailAdress => Password
                 .TryCreate(password)
                 .OnSuccess(password => new User(mailAdress, password) { DomainEvents = [new UserAccountCreated(mailAdress)]})
             );
@@ -66,7 +66,7 @@ public record User : AggregateRoot<User> {
         public IResponse<User> TryWithPassword(string value) =>
             this.IsAnonymous
                 ? Response.Failure<User>(new InvariantException<User>("Le mot de passe d'un compte anonymisé ne peut être redéfini !"))
-                : ValueObjects.Password
+                : Password
                     .TryCreate(value)
                     .OnSuccess(password => this with { Password = password });
 
@@ -82,17 +82,15 @@ public record User : AggregateRoot<User> {
         public User AsAnonymized() =>
             this with {
                 MailAddress                   = null,
-                Password                      = null,
+                Password                      = Password.FromNoise(),
                 AnonymizationProcessStartedAt = DateTime.Now,
                 DomainEvents                  = [..this.DomainEvents, new UserAnonymized(this.Id)]
             };
 
         public IResponse TryVerifyPassword(string value) =>
-            this.Password?.Verify(value) switch {
-                true  => Response.Success(),
-                false => Response.Failure("Mot de passe incorrect !"),
-                null  => Response.Failure("Impossible de vérifier le mot de passe d'un compte anonymisé !")
-            };
+            this.IsAnonymous
+                ? this.Password.TryVerify(value)
+                : Response.Failure("Impossible de vérifier le mot de passe d'un compte anonymisé !");
 
     #endregion
 

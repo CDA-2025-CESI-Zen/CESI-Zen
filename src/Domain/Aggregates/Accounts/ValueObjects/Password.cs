@@ -44,15 +44,22 @@ public readonly record struct Password(string Hash) {
         return Response.Success(new Password(Convert.ToBase64String(outputBytes)));
     }
 
-    // hashedPassword must be of the format of HashWithPassword (salt + Hash(salt+input)
-    public bool Verify(string password) {
+    public static Password FromNoise() {
+        var random      = new Random();
+        var outputBytes = new byte[1 + SALT_SIZE + PBKDF2_SUBKEY_LENGTH];
+        random.NextBytes(outputBytes);
+        return new Password(Convert.ToBase64String(outputBytes));
+    }
+
+
+    public IResponse TryVerify(string password) {
 
         var hashedPasswordBytes = Convert.FromBase64String(this.Hash);
 
         // Verify a version 0 (see comment above) text hash.
         if (hashedPasswordBytes.Length != (1 + SALT_SIZE + PBKDF2_SUBKEY_LENGTH) || hashedPasswordBytes[0] != 0x00)
             // Wrong length or version header.
-            return false;
+            return Response.Failure();
 
         var salt = new byte[SALT_SIZE];
         Buffer.BlockCopy(hashedPasswordBytes, 1, salt, 0, SALT_SIZE);
@@ -63,7 +70,9 @@ public readonly record struct Password(string Hash) {
         using (var deriveBytes = new Rfc2898DeriveBytes(password, salt, PBKDF2_ITER_COUNT, HashAlgorithmName.SHA256))
             generatedSubkey = deriveBytes.GetBytes(PBKDF2_SUBKEY_LENGTH);
 
-        return ByteArraysEqual(storedSubkey, generatedSubkey);
+        return ByteArraysEqual(storedSubkey, generatedSubkey)
+            ? Response.Success()
+            : Response.Failure("Mot de passe incorrect !");
     }
 
     // Compares two byte arrays for equality. The method is specifically written so that the loop is not optimized.
