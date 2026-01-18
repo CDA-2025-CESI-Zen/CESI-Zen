@@ -9,7 +9,7 @@ namespace CesiZen.Application.Services;
 public sealed class AdminSessionService(
     IRepository<Admin> repository,
     IAdminAuthService  authService
-) {
+) : IAdminSessionService {
     public async Task<IResponse<AdminSession>> TryAuthAsync(string mailAddress, string password) =>
         await repository
             .TryGetAsync(admin => admin.MailAddress.Address == mailAddress)
