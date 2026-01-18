@@ -12,7 +12,7 @@ public record Category : AggregateRoot<Category> {
         public ICollection<Page> Pages { get; protected init; } = [];
 
         public override Func<IRepository<Category>, Task<IResponse<Category>>>? RepositoryInvariant => async (repository) => 
-            await repository.AnyAsync((x) => x.Title.Value == this.Title.Value)
+            await repository.AnyAsync((x) => x.Title == this.Title)
                 ? Response.Failure<Category>(new InvariantException<Category>($"Le titre de catégorie `{this.Title.Value}` est déjà utilisé par une catégorie !"))
                 : Response.Success(this);
 

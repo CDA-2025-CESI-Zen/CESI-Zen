@@ -26,6 +26,6 @@ public interface IRepository<T> where T : AggregateRoot<T> {
     Task<bool> ContainsIdAsync(Id id);
 
     Task<bool> AnyAsync();
-    Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
+    Task<bool> AnyAsync(Func<T, bool> predicate);
 
 }

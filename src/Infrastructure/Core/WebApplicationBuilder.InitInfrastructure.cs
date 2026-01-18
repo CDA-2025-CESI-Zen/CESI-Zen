@@ -11,7 +11,7 @@ namespace CesiZen.Infrastructure.Core;
 public static partial class Extensions {
 
     /// <summary>
-    /// Initializes all the app's services.
+    /// Initializes all the infrastructure's services.
     /// </summary>
     /// <param name="self">The app builder.</param>
     public static void InitInfrastructure(this WebApplicationBuilder builder) {

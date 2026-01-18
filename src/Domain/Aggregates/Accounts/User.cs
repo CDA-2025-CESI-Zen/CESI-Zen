@@ -25,8 +25,7 @@ public record User : AggregateRoot<User> {
         public override Func<IRepository<User>, Task<IResponse<User>>>? RepositoryInvariant => async (repository) => 
             this.MailAddress?.Address is string mailAddress && await repository.AnyAsync((x) =>
                 x.Id != this.Id &&
-                x.MailAddress != null &&
-                x.MailAddress.Address == mailAddress
+                x.MailAddress?.Address == mailAddress
             ) ? Response.Failure<User>(new InvariantException<User>($"L'adresse électronique `{mailAddress}` est déjà utilisée par un compte !"))
               : Response.Success(this);
 

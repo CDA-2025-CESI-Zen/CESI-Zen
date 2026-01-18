@@ -1,1 +1,1 @@
-global using Id = ulong;
+global using Id = uint;

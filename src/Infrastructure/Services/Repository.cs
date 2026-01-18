@@ -116,7 +116,7 @@ public class Repository<T>(
         public virtual async Task<bool> ContainsIdAsync(Id id) => await this.table.FindAsync(id) is not null;
 
         public virtual async Task<bool> AnyAsync() => await this.table.AnyAsync();
-        public virtual async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate) => await this.table.AnyAsync(predicate);
+        public virtual async Task<bool> AnyAsync(Func<T, bool> predicate) => await this.table.AsAsyncEnumerable().AnyAsync(predicate);
 
     #endregion
 
