@@ -47,7 +47,9 @@ public class Repository<T>(
             this.TryGetAsync(id).OnSuccessAsync(oldEntity =>
                 this.TryValidateAsync(changes(oldEntity)).OnSuccessAsync(async entity => {
 
-                    this.table.Entry(oldEntity).CurrentValues.SetValues(entity);
+                    this.table.Entry(oldEntity).State = EntityState.Detached;
+                    this.table.Attach(entity);
+                    this.table.Entry(entity).State = EntityState.Modified;
                     await this.dbContext.SaveChangesAsync();
                 
                 })
@@ -57,23 +59,13 @@ public class Repository<T>(
             this.TryGetAsync(id).OnSuccessAsync(oldEntity =>
                 changes(oldEntity).OnSuccessAsync(this.TryValidateAsync).OnSuccessAsync(async entity => {
 
-                    this.table.Entry(oldEntity).CurrentValues.SetValues(entity);
+                    this.table.Entry(oldEntity).State = EntityState.Detached;
+                    this.table.Attach(entity);
+                    this.table.Entry(entity).State = EntityState.Modified;
                     await this.dbContext.SaveChangesAsync();
                 
                 })
             );
-
-        public virtual Task<IResponse<T>> TryUpdateAsync(Id id, T entity) =>
-            this.TryGetAsync(id).OnSuccessAsync(oldEntity =>
-                this.TryValidateAsync(entity).OnSuccessAsync(async entity => {
-
-                    // We replace the old entity with another one.
-                    this.table.Entry(oldEntity).CurrentValues.SetValues(entity);
-                    await this.dbContext.SaveChangesAsync();
-
-                })
-            );
-
 
         public virtual async Task<IResponse> TryDeleteAsync(T entity) {
             this.table.Remove(entity);
@@ -82,7 +74,7 @@ public class Repository<T>(
                 : Response.Failure(new EntityNotFoundException(typeof(T), entity.Id));
         }
 
-        public virtual Task<IResponse> TryDeleteAsync(Expression<Func<T, bool>> predicate) =>
+        public virtual Task<IResponse> TryDeleteAsync(Func<T, bool> predicate) =>
             this.TryGetAsync(predicate).OnSuccessAsync(this.TryDeleteAsync);
 
         public virtual Task<IResponse> TryDeleteAsync(Id id) =>
@@ -103,8 +95,8 @@ public class Repository<T>(
                 ? Response.Success(entity)
                 : Response.Failure<T>(new EntityNotFoundException(typeof(T), id));
 
-        public virtual async Task<IResponse<T>> TryGetAsync(Expression<Func<T, bool>> predicate) =>
-            await this.table.SingleOrDefaultAsync(predicate) is T entity
+        public virtual async Task<IResponse<T>> TryGetAsync(Func<T, bool> predicate) =>
+            await this.table.AsAsyncEnumerable().SingleOrDefaultAsync(predicate) is T entity
                 ? Response.Success(entity)
                 : Response.Failure<T>(new EntityNotFoundException(typeof(T)));
 

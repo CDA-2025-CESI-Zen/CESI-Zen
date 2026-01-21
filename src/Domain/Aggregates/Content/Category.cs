@@ -8,8 +8,8 @@ public record Category : AggregateRoot<Category> {
 
     #region PROPERTIES
 
-        public Title             Title { get; protected init; }
-        public ICollection<Page> Pages { get; protected init; } = [];
+        public         Title             Title { get; protected init; }
+        public virtual ICollection<Page> Pages { get; protected init; } = [];
 
         public override Func<IRepository<Category>, Task<IResponse<Category>>>? RepositoryInvariant => async (repository) => 
             await repository.AnyAsync((x) => x.Title == this.Title)

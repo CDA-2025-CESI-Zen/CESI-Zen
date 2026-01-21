@@ -1,0 +1,109 @@
+﻿@using CesiZen.Application.Services
+@using CesiZen.Domain.Aggregates.Diagnoses
+@using FluentResponse
+@using FluentResponse.Interfaces
+
+@using ContentPage = CesiZen.Domain.Aggregates.Content.Page
+@using Microsoft.Extensions.Caching.Memory
+
+@inject IQueryService<DiagnosisAnalysis> queryService
+@inject ICommandService<DiagnosisAnalysis> commandService
+@inject ISnackbar snackbar
+
+<MudDataGrid
+    @ref="@grid"
+    T="ViewModel"
+    Items="@items"
+    ReadOnly="false" 
+    EditMode="@DataGridEditMode.Form"
+    CommittedItemChanges="@CommittedItemChangesAsync"
+    EditDialogOptions="@(new DialogOptions() { FullWidth = true, MaxWidth = MaxWidth.Small })"
+    Elevation="0"
+    Dense="true"
+    Class="px-4"
+    Style="background-color: var(--mud-palette-background-gray)"
+>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Analyses de diagnostique</MudText>
+        <MudSpacer />
+        <MudButtonGroup Class="ma-0 pa-0" Color="@Color.Primary" Variant="@Variant.Filled">
+            <MudButton OnClick="NewItemAsync">
+                Ajouter une analyse
+            </MudButton>
+        </MudButtonGroup>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Title="Seuil d'analyse" Property="x => x.ScoreThreshold"/>
+        <PropertyColumn Title="Contenu" Property="x => x.Content" Hidden="true">
+            <EditTemplate>
+                <MudTextField
+                    @bind-Value="context.Item.Content"
+                    Label="Contenu"
+                    Margin="@Margin.Dense"
+                    Variant="@Variant.Outlined"
+                    Lines="16"
+                />
+            </EditTemplate>
+        </PropertyColumn>
+        <TemplateColumn>
+            <CellTemplate>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))"/>
+            </CellTemplate>
+            <EditTemplate>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Rounded.Delete" Color="Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))" Edge="Edge.End" Class="mt-2">
+                    Supprimer
+                </MudButton>
+            </EditTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="@ViewModel" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private class ViewModel {
+        public Id     Id             { get; set; } = default;
+        public int    ScoreThreshold { get; set; } = 0;
+        public string Content        { get; set; } = "...";
+    }
+
+    private IEnumerable<ViewModel> items = [];
+    private MudDataGrid<ViewModel> grid = default!;
+
+    protected override async Task OnInitializedAsync() {
+        items = (await queryService.GetAllAsync()).Select(x => new ViewModel {
+            Id             = x.Id,
+            ScoreThreshold = x.ScoreThreshold,
+            Content        = x.Content
+        }).OrderBy(x => x.ScoreThreshold);
+    }
+
+    private async Task NewItemAsync() {
+        await grid.SetEditingItemAsync(new ViewModel());
+    }
+
+    private async Task DeleteItemAsync(ViewModel item) {
+        await grid.CancelEditingItemAsync();
+        if (item.Id is not default(Id))
+            await commandService
+                .TryDeleteAsync(item.Id)
+                .OnSuccessAsync(OnInitializedAsync)
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task CommittedItemChangesAsync(ViewModel item) {
+        if (item.Id is not default(Id))
+            await commandService
+                .TryUpdateAsync(item.Id, x => Response.Success(x
+                    .WithScoreThreshold(item.ScoreThreshold)
+                    .WithContent(item.Content))
+                ).OnSuccessAsync(_ => OnInitializedAsync())
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+        else await commandService
+            .TryCreateAsync(() => Response.Success(DiagnosisAnalysis.Create(item.ScoreThreshold, item.Content)))
+            .OnSuccessAsync(_ => OnInitializedAsync())
+            .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+}

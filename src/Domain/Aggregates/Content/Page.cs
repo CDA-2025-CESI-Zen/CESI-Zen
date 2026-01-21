@@ -8,9 +8,9 @@ public record Page : AggregateRoot<Page> {
 
     #region PROPERTIES
 
-        public Title    Title    { get; protected init; }
-        public Category Category { get; protected init; } = null!;
-        public string   Content  { get; protected init; } = null!;
+        public         Title    Title    { get; protected init; }
+        public virtual Category Category { get; protected init; } = null!;
+        public         string   Content  { get; protected init; } = null!;
 
     #endregion
     #region CONSTRUCTORS

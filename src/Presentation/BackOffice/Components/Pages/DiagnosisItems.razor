@@ -1,0 +1,87 @@
+﻿@using CesiZen.Application.Services
+@using CesiZen.Domain.Aggregates.Diagnoses
+@using CesiZen.Domain.Aggregates.Diagnoses.ValueObjects
+@using FluentResponse
+@using FluentResponse.Interfaces
+
+@inject IQueryService<DiagnosisItem> queryService
+@inject ICommandService<DiagnosisItem> commandService
+@inject ISnackbar snackbar
+
+<MudDataGrid
+    T="ViewModel"
+    Items="@items"
+    ReadOnly="false" 
+    EditMode="@DataGridEditMode.Cell"
+    CommittedItemChanges="@CommittedItemChangesAsync"
+    Elevation="0"
+    Dense="true"
+    Class="px-4"
+    Style="background-color: var(--mud-palette-background-gray)"
+>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Evènements du diagnostique</MudText>
+        <MudSpacer />
+        <MudButtonGroup Class="ma-0 pa-0" Color="@Color.Primary" Variant="@Variant.Filled">
+            <MudButton OnClick="NewItemAsync">
+                Ajouter un évènement
+            </MudButton>
+        </MudButtonGroup>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Title="Libellé" Property="x => x.Label"/>
+        <PropertyColumn Title="Score" Property="x => x.Score" CellStyle="width: 10em" />
+        <TemplateColumn>
+            <EditTemplate>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="@Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))" />
+            </EditTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="@ViewModel" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private class ViewModel {
+        public Id?    Id    { get; set; }
+        public string Label { get; set; }
+        public int    Score { get; set; }
+    }
+
+    private List<ViewModel> items = [];
+
+    protected override async Task OnInitializedAsync() {
+        items = (await queryService.GetAllAsync()).Select(x => new ViewModel() {
+            Id    = x.Id,
+            Label = x.EventLabel.Value,
+            Score = x.Score
+        }).OrderByDescending(x => x.Id).ToList();
+    }
+
+    private async Task NewItemAsync() {
+        await commandService
+            .TryCreateAsync(() => DiagnosisItem.TryCreate("Nouvel évènement", 0))
+            .OnSuccessAsync(_ => OnInitializedAsync())
+            .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task DeleteItemAsync(ViewModel item) {
+        if (item.Id is Id id)
+            await commandService
+                .TryDeleteAsync(id)
+                .OnSuccessAsync(OnInitializedAsync)
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task CommittedItemChangesAsync(ViewModel item) {
+        if (item.Id is Id id)
+            await commandService
+                .TryUpdateAsync(id, x => x.WithScore(item.Score).TryWithEventLabel(item.Label))
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+
+    }
+
+    private string? ValidateLabel(string value) =>
+        (EventLabel.TryCreate(value) as IFailure)?.ErrorMessage;
+}

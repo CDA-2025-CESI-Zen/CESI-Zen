@@ -51,7 +51,7 @@ public sealed class AdminAuthService(
                 issuer             : this.tokenIssuer,
                 audience           : this.tokenAudience,
                 claims             : claims,
-                expires            : DateTime.Now.Add(this.authenticationTokenExpiry),
+                expires            : DateTime.UtcNow.Add(this.authenticationTokenExpiry),
                 signingCredentials : this.credentials
             );
 

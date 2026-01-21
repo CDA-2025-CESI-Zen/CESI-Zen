@@ -12,8 +12,8 @@ public record User : AggregateRoot<User> {
         public UserMailAddress? MailAddress { get; protected init; }
         public Password         Password    { get; protected init; }
 
-        public DateTime FirstActivity { get; protected init; } = DateTime.Now;
-        public DateTime LastActivity  { get; protected init; } = DateTime.Now;
+        public DateTime FirstActivity { get; protected init; } = DateTime.UtcNow;
+        public DateTime LastActivity  { get; protected init; } = DateTime.UtcNow;
 
         public UserDiagnosisResult? FirstDiagnosisResult { get; protected init; }
         public UserDiagnosisResult? LastDiagnosisResult  { get; protected init; }
@@ -56,10 +56,11 @@ public record User : AggregateRoot<User> {
                 : UserMailAddress
 
                     .TryCreate(value)
-                    .OnSuccess(mailAddress => this with {
-                        DomainEvents = [..this.DomainEvents, new UserMailAddressChanged(this.Id, this.MailAddress!, mailAddress)],
-                        MailAddress  = mailAddress
-                    });
+                    .OnSuccess(mailAddress => (this.MailAddress?.Address != mailAddress.Address)
+                        ? this with {
+                            DomainEvents = [..this.DomainEvents, new UserMailAddressChanged(this.Id, this.MailAddress!, mailAddress)],
+                            MailAddress  = mailAddress
+                        } : this);
                 
 
         public IResponse<User> TryWithPassword(string value) =>
@@ -70,7 +71,7 @@ public record User : AggregateRoot<User> {
                     .OnSuccess(password => this with { Password = password });
 
         public User WithNewActivity() =>
-            this with { LastActivity = DateTime.Now };
+            this with { LastActivity = DateTime.UtcNow };
 
         public User WithNewDiagnosisResult(int score) =>
             this with {
@@ -82,12 +83,12 @@ public record User : AggregateRoot<User> {
             this with {
                 MailAddress                   = null,
                 Password                      = Password.FromNoise(),
-                AnonymizationProcessStartedAt = DateTime.Now,
+                AnonymizationProcessStartedAt = DateTime.UtcNow,
                 DomainEvents                  = [..this.DomainEvents, new UserAnonymized(this.Id)]
             };
 
         public IResponse TryVerifyPassword(string value) =>
-            this.IsAnonymous
+            !this.IsAnonymous
                 ? this.Password.TryVerify(value)
                 : Response.Failure("Impossible de vérifier le mot de passe d'un compte anonymisé !");
 

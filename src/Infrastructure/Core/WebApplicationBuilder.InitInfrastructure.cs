@@ -6,6 +6,8 @@ using CesiZen.Domain.Aggregates.Content;
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Diagnoses;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CesiZen.Infrastructure.Core;
 public static partial class Extensions {
@@ -20,8 +22,8 @@ public static partial class Extensions {
 
         builder.Services.AddScoped<IRepository<Admin>,             Repository<Admin>>();
         builder.Services.AddScoped<IRepository<User>,              Repository<User>>();
-        builder.Services.AddScoped<IRepository<Category>,          Repository<Category>>();
-        builder.Services.AddScoped<IRepository<Page>,              Repository<Page>>();
+        builder.Services.AddScoped<IRepository<Category>,          CategoryRepository>();
+        builder.Services.AddScoped<IRepository<Page>,              PageRepository>();
         builder.Services.AddScoped<IRepository<DiagnosisAnalysis>, Repository<DiagnosisAnalysis>>();
         builder.Services.AddScoped<IRepository<DiagnosisItem>,     Repository<DiagnosisItem>>();
 
