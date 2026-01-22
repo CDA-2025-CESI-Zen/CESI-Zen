@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 namespace CesiZen.Infrastructure.Services;
 public sealed class RegistrationValidationCacheService(
     TimeSpan registrationValidationRequestExpiry
-) : CacheService<string, PIN>, IRegistrationValidationCacheService {
+) : CacheService<string, Pin>, IRegistrationValidationCacheService {
 
     public override TimeSpan CacheDuration { get; } = registrationValidationRequestExpiry;
 

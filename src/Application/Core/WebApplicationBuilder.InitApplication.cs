@@ -29,6 +29,9 @@ public static partial class Extensions {
         builder.Services.AddScoped<IQueryService<DiagnosisItem>,     QueryService<DiagnosisItem>>();
 
         builder.Services.AddScoped<IAdminSessionService, AdminSessionService>();
+        builder.Services.AddScoped<IUserSessionService,  UserSessionService>();
+
+        builder.Services.AddScoped<IUserDiagnosisResultService, UserDiagnosisResultService>();
 
     }
 }
