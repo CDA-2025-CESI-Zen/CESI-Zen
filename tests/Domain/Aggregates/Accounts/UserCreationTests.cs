@@ -1,7 +1,5 @@
-using FluentResponse.Interfaces;
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Accounts.Events;
-using FluentAssertions;
 using CesiZen.Domain.Aggregates.Core;
 using CesiZen.Domain.Aggregates.Accounts.ValueObjects;
 

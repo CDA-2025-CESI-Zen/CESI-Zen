@@ -1,5 +1,4 @@
 using CesiZen.Domain.Aggregates.Accounts;
-using FluentAssertions;
 using FluentResponse;
 
 namespace CesiZen.Domain.Tests.Aggregates.Accounts;

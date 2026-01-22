@@ -74,17 +74,12 @@ public sealed class UserSessionService(
     public Task<IResponse<UserSession>> TryUpdateAsync(Id id, string password, Func<User, IResponse<User>> transform) =>
         repository
             .TryGetAsync(id)
-            .OnSuccessAsync(user =>
-
-                user
-                    .TryVerifyPassword(password)
-                    .OnSuccessAsync(() => repository.TryUpdateAsync(id, transform))
-
-            ).OnSuccessAsync(user =>
-
-                authService
-                    .TryGenerateToken(user)
-                    .OnSuccess(token => new UserSession(token, user))
+            .OnSuccessAsync(user => user
+                .TryVerifyPassword(password)
+                .OnSuccessAsync(() => repository.TryUpdateAsync(id, transform))
+            ).OnSuccessAsync(user => authService
+                .TryGenerateToken(user)
+                .OnSuccess(token => new UserSession(token, user))
             );
 
     public Task<IResponse> TryRequestRegistrationPINAsync(string mailAddress) =>
