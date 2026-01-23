@@ -42,31 +42,51 @@ public class UserSessionServiceTests {
     #region TryAuthAsync
 
         [Fact]
-        public async Task TryAuthAsync_WithValidCredentials_ShouldSucceed() {
+        public async Task TryAuthAsync_WithValidCredentials_ShouldSucceed_AndUpdateActivity() {
 
             // Arrange
             var mailAddress = "nom@domaine.fr";
             var password    = "abcdABCD1234";
 
-            var user = User.TryCreate(mailAddress, password).Unwrap();
+            var user        = User.TryCreate(mailAddress, password).Unwrap();
+            var updatedUser = user.WithNewActivity();
 
             repository
                 .Setup(r => r.TryGetAsync(It.IsAny<Func<User, bool>>()))
                 .ReturnsAsync(Response.Success(user));
 
+            repository
+                .Setup(r => r.TryUpdateAsync(user.Id, It.IsAny<Func<User, User>>()))
+                .ReturnsAsync((Id id, Func<User, User> transform) => Response.Success(updatedUser));
+
             var token = "token";
             authService
-                .Setup(a => a.TryGenerateToken(user))
+                .Setup(a => a.TryGenerateToken(updatedUser))
                 .Returns(Response.Success(token));
 
             // Act
             var response = await service.TryAuthAsync(mailAddress, password);
 
             // Assert
-            response
-                .Should().BeAssignableTo<ISuccess<UserSession>>()
-                .Which.Value
-                .Should().Be(new UserSession(token, user));
+            var assertion = response.Should().BeAssignableTo<ISuccess<UserSession>>();
+
+            assertion.Which.Value.Token.Should().Be(token);
+            assertion.Which.Value.User.Should().Be(updatedUser);
+
+            repository.Verify(r =>
+                r.TryGetAsync(It.IsAny<Func<User, bool>>()),
+                Times.Once
+            );
+
+            repository.Verify(r =>
+                r.TryUpdateAsync(user.Id, It.IsAny<Func<User, User>>()),
+                Times.Once
+            );
+
+            authService.Verify(a =>
+                a.TryGenerateToken(updatedUser),
+                Times.Once
+            );
         }
 
         [Fact]

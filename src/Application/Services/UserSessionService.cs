@@ -2,7 +2,6 @@ using CesiZen.Application.Core.ValueObjects;
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Accounts.ValueObjects;
 using CesiZen.Domain.Aggregates.Core;
-using CesiZen.Domain.Aggregates.Diagnoses;
 using CesiZen.Infrastructure.Core.Exceptions;
 using CesiZen.Infrastructure.Core.ValueObjects;
 using CesiZen.Infrastructure.Services;
@@ -23,9 +22,8 @@ public sealed class UserSessionService(
             .TryGetAsync(user => user.MailAddress?.Address == mailAddress)
             .OnSuccessAsync(user => user
                 .TryVerifyPassword(password)
-                .OnSuccess(() => authService.TryGenerateToken(user))
-                .OnSuccess(token => new UserSession(token, user))
-            );
+                .OnSuccessAsync(() => repository.TryUpdateAsync(user.Id, user => user.WithNewActivity()))
+            ).OnSuccessAsync(user => authService.TryGenerateToken(user).OnSuccess(token => new UserSession(token, user)));
 
     public Task<IResponse<UserSession>> TryRegisterAsync(string mailAddress, string password, Pin pin) =>
         registrationValidationCacheService
