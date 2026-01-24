@@ -1,5 +1,4 @@
 using System.Data;
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using FluentResponse;
 using FluentResponse.Interfaces;
@@ -85,8 +84,8 @@ public class Repository<T>(
             await this.dbContext.SaveChangesAsync();
         }
 
-        public virtual async Task DeleteAllAsync(Expression<Func<T, bool>> predicate) {
-            this.table.RemoveRange(this.table.Where(predicate));
+        public virtual async Task DeleteAllAsync(Func<T, bool> predicate) {
+            this.table.RemoveRange(this.table.AsEnumerable().Where(predicate));
             await this.dbContext.SaveChangesAsync();
         }
         
@@ -101,8 +100,15 @@ public class Repository<T>(
                 : Response.Failure<T>(new EntityNotFoundException(typeof(T)));
 
         public virtual async Task<IEnumerable<T>> GetAllAsync() => await this.table.ToListAsync();
-        public virtual async Task<IEnumerable<T>> GetAllAsync(IEnumerable<Id> ids) => (await Task.WhenAll(ids.Select(async key => await this.TryGetAsync(key)))).OfType<T>();
-        public virtual async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate) => await this.table.Where(predicate).ToListAsync();
+        public virtual async Task<IEnumerable<T>> GetAllAsync(IEnumerable<Id> ids) {
+            var results = new List<T>(ids.Count());
+            foreach (var id in ids)
+                await this.TryGetAsync(id).OnSuccessAsync(results.Add);
+
+            return results;
+        }
+
+        public virtual async Task<IEnumerable<T>> GetAllAsync(Func<T, bool> predicate) => await this.table.AsAsyncEnumerable().Where(predicate).ToListAsync();
 
         public virtual async Task<bool> ContainsAsync(T entity) => await this.table.ContainsAsync(entity);
         public virtual async Task<bool> ContainsIdAsync(Id id) => await this.table.FindAsync(id) is not null;

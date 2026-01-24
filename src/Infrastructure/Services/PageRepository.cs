@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using CesiZen.Domain.Aggregates.Content;
 using FluentResponse;
 using FluentResponse.Interfaces;
@@ -17,6 +16,6 @@ public sealed class PageRepository(
         base.TryGetAsync(predicate).OnSuccessAsync(page => dbContext.Entry(page).Reference(x => x.Category).LoadAsync());
 
     public override async Task<IEnumerable<Page>> GetAllAsync() => await this.table.Include(x => x.Category).ToListAsync();
-    public override async Task<IEnumerable<Page>> GetAllAsync(Expression<Func<Page, bool>> predicate) => await this.table.Include(x => x.Category).Where(predicate).ToListAsync();
+    public override async Task<IEnumerable<Page>> GetAllAsync(Func<Page, bool> predicate) => await this.table.Include(x => x.Category).AsAsyncEnumerable().Where(predicate).ToListAsync();
 
 }

@@ -30,8 +30,8 @@ public static partial class Extensions {
         builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
         builder.Services.AddScoped<IUserAuthService,  UserAuthService>();
 
-        builder.Services.AddScoped<IPasswordResetCacheService,          PasswordResetCacheService>();
-        builder.Services.AddScoped<IRegistrationValidationCacheService, RegistrationValidationCacheService>();
+        builder.Services.AddSingleton<IPasswordResetCacheService,          PasswordResetCacheService>();
+        builder.Services.AddSingleton<IRegistrationValidationCacheService, RegistrationValidationCacheService>();
 
         builder.Services.AddScoped<IMailService, MailService>();
 

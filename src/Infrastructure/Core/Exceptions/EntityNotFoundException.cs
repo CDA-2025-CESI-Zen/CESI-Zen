@@ -1,3 +1,5 @@
+using CesiZen.Domain.Aggregates.Accounts;
+
 namespace CesiZen.Infrastructure.Core.Exceptions;
 public class EntityNotFoundException : Exception {
     
@@ -11,7 +13,9 @@ public class EntityNotFoundException : Exception {
         }
 
     public EntityNotFoundException(Type type)
-        : base($"Il n'y a pas d'entité de type `{type.Name}` correspondante !") {
-            this.EntityType = type;
-        }
+        : base($"Il n'y a pas { type switch {
+            Type when type == typeof(User) => "de compte correspondant",
+            Type when type == typeof(Admin)=> "de compte administrateur correspondant",
+            _ => $"d'entité de type {type.Name} correspondante"
+        }} !") {}
 }

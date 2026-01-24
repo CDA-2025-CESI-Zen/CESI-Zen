@@ -33,7 +33,7 @@ public sealed class AdminAuthService(
             authenticationTokenExpiry : TimeSpan.Parse(configuration["Jwt:Expiry:Admin"]!),
             tokenIssuer               : configuration["Jwt:Issuer"]!,
             tokenAudience             : configuration["Jwt:Audience"]!,
-            encodingKey               : configuration["Jwt:Key"]!
+            encodingKey               : configuration["Jwt:Key:Admin"]!
         ) {}
 
     #endregion

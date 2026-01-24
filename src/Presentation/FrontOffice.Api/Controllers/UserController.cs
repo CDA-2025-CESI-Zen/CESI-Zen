@@ -1,0 +1,134 @@
+using CesiZen.Application.Core.ValueObjects;
+using CesiZen.Application.Services;
+using CesiZen.Domain.Aggregates.Accounts;
+using CesiZen.Presentation.FrontOffice.Api.Extensions;
+using CesiZen.Presentation.FrontOffice.Api.Resources;
+using FluentResponse;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CesiZen.Presentation.FrontOffice.Api.Controllers;
+
+[ApiController]
+[Route(ROUTE)]
+public class UserController(
+    IUserSessionService         sessionService,
+    IUserDiagnosisResultService diagnosisResultService,
+    IQueryService<User>         queryService
+) : ControllerBase {
+
+    public const string ROUTE = "/users";
+
+    #region DTOS
+
+        public readonly record struct RegisterDto(
+            string MailAddress,
+            string Password,
+            uint Pin
+        );
+
+        public readonly record struct AuthDto(
+            string MailAddress,
+            string Password
+        );
+
+        public readonly record struct UpdateAccountDto(
+            string Password,
+            string? NewMailAddress = null,
+            string? NewPassword    = null
+        );
+
+        public readonly record struct SaveDiagnosisResultDto(
+            List<Id> DiagnosisItemIds
+        );
+
+
+        public readonly record struct ResetPasswordDto(
+            string MailAddress,
+            string NewPassword,
+            uint Pin
+        );
+
+        public readonly record struct CloseAccountDto(
+            string Password
+        );
+
+        public readonly record struct RequestPinGenerationDto(
+            string MailAddress
+        );
+    
+    #endregion
+    #region ROUTES
+
+        [HttpPost("/register")]
+        public Task<IResult> RegisterAsync(RegisterDto dto) =>
+            sessionService
+                .TryRegisterAsync(dto.MailAddress, dto.Password, dto.Pin)
+                .ToResourceAsync<UserSession, UserSessionResource>(x => Results.CreatedAtRoute(
+                    routeName   : nameof(GetAsync),
+                    routeValues : new { x.Value.Id },
+                    value       : x
+                ));
+
+        [HttpPost("/auth")]
+        public Task<IResult> AuthAsync(AuthDto dto) =>
+            sessionService
+                .TryAuthAsync(dto.MailAddress, dto.Password)
+                .ToResourceAsync<UserSession, UserSessionResource>(Results.Ok);
+
+        [HttpGet("{id}", Name = nameof(GetAsync))]
+        [Authorize(Policy = "LimitedUserAccess")]
+        public Task<IResult> GetAsync(Id id) =>
+            queryService.TryGetAsync(id).ToResourceAsync<User, UserResource>(Results.Ok);
+
+        [HttpPatch("{id}")]
+        [Authorize(Policy = "LimitedUserAccess")]
+        public Task<IResult> UpdateAsync(Id id, UpdateAccountDto dto) =>
+            sessionService
+                .TryUpdateAsync(id, dto.Password, user => {
+
+                    var response = FluentResponse.Response.Success(user);
+                    if (dto.NewMailAddress is not null) response = response.OnSuccess(x => x.TryWithMailAddress(dto.NewMailAddress));
+                    if (dto.NewPassword is not null)    response = response.OnSuccess(x => x.TryWithPassword(dto.NewPassword));
+
+                    return response;
+
+                }).ToResourceAsync<UserSession, UserSessionResource>(Results.Ok);
+
+        [HttpPost("{id}/save-diagnosis-result")]
+        [Authorize(Policy = "LimitedUserAccess")]
+        public Task<IResult> AnonymizeAsync(Id id, SaveDiagnosisResultDto dto) =>
+            diagnosisResultService
+                .TrySaveDiagnosisResult(id, dto.DiagnosisItemIds)
+                .ToResultAsync(Results.Ok);
+
+        [HttpPost("{id}/anonymize")]
+        [Authorize(Policy = "LimitedUserAccess")]
+        public Task<IResult> AnonymizeAsync(Id id, CloseAccountDto dto) =>
+            sessionService
+                .TryAnonymizeAsync(id, dto.Password)
+                .ToResultAsync(_ => Results.Ok());
+
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "LimitedUserAccess")]
+        public Task<IResult> DeleteAsync(Id id, CloseAccountDto dto) =>
+            sessionService
+                .TryDeleteAsync(id, dto.Password)
+                .ToResultAsync(_ => Results.Ok());
+
+        [HttpPost("/request-register")]
+        public Task<IResult> RequestRegisterAsync(RequestPinGenerationDto dto) =>
+            sessionService
+                .TryRequestRegistrationPINAsync(dto.MailAddress)
+                .ToResultAsync(Results.Ok);
+
+        [HttpPost("/request-password-reset")]
+        public Task<IResult> RequestPasswordResetAsync(RequestPinGenerationDto dto) =>
+            sessionService
+                .TryRequestPasswordResetPINAsync(dto.MailAddress)
+                .ToResultAsync(Results.Ok);
+
+    #endregion
+
+}

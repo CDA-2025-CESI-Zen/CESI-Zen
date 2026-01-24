@@ -32,10 +32,10 @@ public sealed class UserAuthService(
         public UserAuthService(
             IConfiguration configuration
         ) : this(
-            authenticationTokenExpiry : TimeSpan.Parse(configuration["Jwt:User:Expiry"]!),
-            tokenIssuer               : configuration["Jwt:User:Issuer"]!,
-            tokenAudience             : configuration["Jwt:User:Audience"]!,
-            encodingKey               : configuration["Jwt:User:Key"]!
+            authenticationTokenExpiry : TimeSpan.Parse(configuration["Jwt:Expiry:User"]!),
+            tokenIssuer               : configuration["Jwt:Issuer"]!,
+            tokenAudience             : configuration["Jwt:Audience"]!,
+            encodingKey               : configuration["Jwt:Key:User"]!
         ) {}
 
     #endregion
