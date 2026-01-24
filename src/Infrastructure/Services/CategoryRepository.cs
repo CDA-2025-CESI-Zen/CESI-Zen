@@ -1,13 +1,14 @@
 using CesiZen.Domain.Aggregates.Content;
+using CesiZen.Domain.Aggregates.Core;
 using FluentResponse;
 using FluentResponse.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace CesiZen.Infrastructure.Services;
 public sealed class CategoryRepository(
-    DbContext              dbContext
-    //IDomainEventDispatcher domainEventDispatcher
-) : Repository<Category>(dbContext) {
+    DbContext              dbContext,
+    IDomainEventDispatcher domainEventDispatcher
+) : Repository<Category>(dbContext, domainEventDispatcher) {
 
     public override Task<IResponse<Category>> TryGetAsync(Id id) =>
         base.TryGetAsync(id).OnSuccessAsync(page => dbContext.Entry(page).Collection(x => x.Pages).LoadAsync());

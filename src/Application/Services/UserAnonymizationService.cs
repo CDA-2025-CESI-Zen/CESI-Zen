@@ -1,7 +1,6 @@
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Core;
 using CesiZen.Infrastructure.Services;
-using FluentResponse;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -41,27 +40,10 @@ public class UserAnonymizationService(
 
             foreach (var inactiveUser in inactiveUsers)
                 if (inactiveUser.AnonymizationProcessStartedAt is DateTime anonymizationProcessStartedAt && anonymizationProcessStartedAt.AddMonths(1) <= now)
-                    await repository
-                        .TryUpdateAsync(inactiveUser.Id, x => x.AsAnonymized())
-                        .OnSuccessAsync(x => mailService.TrySendEmailAsync(
-                            inactiveUser.MailAddress!,
-                            "Désactivation de votre compte CESI Zen",
-                            $"""
-                            Votre compte CESI Zen a été désactivé et anonymisé pour cause d'inactivité.
-                            """
-                        ));
+                    await repository.TryUpdateAsync(inactiveUser.Id, x => x.AsAnonymized());
 
                 else if (inactiveUser.AnonymizationProcessStartedAt is null)
-                    await repository
-                        .TryUpdateAsync(inactiveUser.Id, x => x.TryStartAnonymizationProcess())
-                        .OnSuccessAsync(x => mailService.TrySendEmailAsync(
-                            inactiveUser.MailAddress!,
-                            "Désactivation de votre compte CESI Zen",
-                            $"""
-                            Votre compte CESI Zen sera désactivé et anonymisé le {x.AnonymizationProcessStartedAt?.AddMonths(1)} pour cause d'inactivité.
-                            Connectez-vous à l'application pour annuler le processus.
-                            """
-                        ));
+                    await repository.TryUpdateAsync(inactiveUser.Id, x => x.TryStartAnonymizationProcess());
     }
 
         private static int MonthsSinceLastActivity(DateTime lastActivity, DateTime now) =>

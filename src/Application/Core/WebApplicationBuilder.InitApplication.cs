@@ -4,6 +4,9 @@ using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Diagnoses;
 using Microsoft.AspNetCore.Builder;
 using CesiZen.Application.Services;
+using CesiZen.Domain.Aggregates.Core;
+using CesiZen.Domain.Aggregates.Accounts.Events;
+using CesiZen.Application.EventListeners;
 
 namespace CesiZen.Application.Core;
 public static partial class Extensions {
@@ -32,6 +35,14 @@ public static partial class Extensions {
         builder.Services.AddScoped<IUserSessionService,  UserSessionService>();
 
         builder.Services.AddScoped<IUserDiagnosisResultService, UserDiagnosisResultService>();
+
+        builder.Services.AddScoped<IDomainEventDispatcher, DomainEventsDispatcher>();
+        builder.Services.AddScoped<IDomainEventListener<AdminAccountCreated>,             AdminAccountCreatedListener>();
+        builder.Services.AddScoped<IDomainEventListener<AdminMailAddressChanged>,         AdminMailAddressChangedListener>();
+        builder.Services.AddScoped<IDomainEventListener<UserAccountCreated>,              UserAccountCreatedListener>();
+        builder.Services.AddScoped<IDomainEventListener<UserAnonymizationProcessStarted>, UserAnonymizationProcessStartedListener>();
+        builder.Services.AddScoped<IDomainEventListener<UserAnonymized>,                  UserAnonymizedListener>();
+        builder.Services.AddScoped<IDomainEventListener<UserMailAddressChanged>,          UserMailAddressChangedListener>();
 
     }
 }

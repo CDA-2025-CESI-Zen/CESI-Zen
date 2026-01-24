@@ -83,7 +83,9 @@ public record User : AggregateRoot<User> {
             this with {
                 MailAddress  = null,
                 Password     = Password.FromNoise(),
-                DomainEvents = [..this.DomainEvents, new UserAnonymized(this.Id)]
+                DomainEvents = this.MailAddress is not null
+                    ? [..this.DomainEvents, new UserAnonymized(this.Id)]
+                    : this.DomainEvents
             };
 
         public IResponse<User> TryStartAnonymizationProcess() =>
