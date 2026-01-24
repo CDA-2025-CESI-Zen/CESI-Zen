@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using CesiZen.Domain.Aggregates.Core;
 using FluentResponse.Interfaces;
 
@@ -10,7 +9,7 @@ public sealed class QueryService<T>(
     public Task<IEnumerable<T>> GetAllAsync() =>
         repository.GetAllAsync();
         
-    public Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate) =>
+    public Task<IEnumerable<T>> GetAllAsync(Func<T, bool> predicate) =>
         repository.GetAllAsync(predicate);
 
     public Task<IResponse<T>> TryGetAsync(Id id) =>

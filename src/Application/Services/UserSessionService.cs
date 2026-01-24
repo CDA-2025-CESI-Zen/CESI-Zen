@@ -80,6 +80,22 @@ public sealed class UserSessionService(
                 .OnSuccess(token => new UserSession(token, user))
             );
 
+    public Task<IResponse> TryAnonymizeAsync(Id id, string password) =>
+        repository
+            .TryGetAsync(id)
+            .OnSuccessAsync(user => user
+                .TryVerifyPassword(password)
+                .OnSuccessAsync(() => repository.TryUpdateAsync(id, x => x.AsAnonymized()))
+            ).OnSuccessAsync(_ => Response.Success());
+
+    public Task<IResponse> TryDeleteAsync(Id id, string password) =>
+        repository
+            .TryGetAsync(id)
+            .OnSuccessAsync(user => user
+                .TryVerifyPassword(password)
+                .OnSuccessAsync(() => repository.TryDeleteAsync(id))
+            );
+
     public Task<IResponse> TryRequestRegistrationPINAsync(string mailAddress) =>
         UserMailAddress.TryCreate(mailAddress).OnSuccessAsync(async mailAddress => {
 

@@ -81,11 +81,18 @@ public record User : AggregateRoot<User> {
 
         public User AsAnonymized() =>
             this with {
-                MailAddress                   = null,
-                Password                      = Password.FromNoise(),
-                AnonymizationProcessStartedAt = DateTime.UtcNow,
-                DomainEvents                  = [..this.DomainEvents, new UserAnonymized(this.Id)]
+                MailAddress  = null,
+                Password     = Password.FromNoise(),
+                DomainEvents = [..this.DomainEvents, new UserAnonymized(this.Id)]
             };
+
+        public IResponse<User> TryStartAnonymizationProcess() =>
+            this.AnonymizationProcessStartedAt is not null
+                ? Response.Failure<User>(new InvariantException<User>("Le compte est déjà en train d'être anonymisé !"))
+                : Response.Success(this with {
+                    AnonymizationProcessStartedAt = DateTime.UtcNow,
+                    DomainEvents                  = [..this.DomainEvents, new UserAnonymizationProcessStarted(this.Id)]
+                });
 
         public IResponse TryVerifyPassword(string value) =>
             !this.IsAnonymous

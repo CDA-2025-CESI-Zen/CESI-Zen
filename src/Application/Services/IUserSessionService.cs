@@ -9,6 +9,8 @@ public interface IUserSessionService {
     Task<IResponse<UserSession>> TryAuthAsync(string mailAddress, string password);
     Task<IResponse<UserSession>> TryResetPasswordAsync(string mailAddress, string newPassword, Pin pin);
     Task<IResponse<UserSession>> TryUpdateAsync(Id id, string password, Func<User, IResponse<User>> transform);
+    Task<IResponse>              TryAnonymizeAsync(Id id, string password);
+    Task<IResponse>              TryDeleteAsync(Id id, string password);
     Task<IResponse> TryRequestRegistrationPINAsync(string mailAddress);
     Task<IResponse> TryRequestPasswordResetPINAsync(string mailAddress);
 }

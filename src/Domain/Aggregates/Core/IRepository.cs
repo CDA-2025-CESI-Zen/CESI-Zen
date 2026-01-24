@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using FluentResponse.Interfaces;
 
 namespace CesiZen.Domain.Aggregates.Core;
@@ -12,14 +11,14 @@ public interface IRepository<T> where T : AggregateRoot<T> {
     Task<IResponse> TryDeleteAsync(Func<T, bool> predicate);
 
     Task DeleteAllAsync();
-    Task DeleteAllAsync(Expression<Func<T, bool>> predicate);
+    Task DeleteAllAsync(Func<T, bool> predicate);
 
     Task<IResponse<T>> TryGetAsync(Id id);
     Task<IResponse<T>> TryGetAsync(Func<T, bool> predicate);
 
     Task<IEnumerable<T>> GetAllAsync();
     Task<IEnumerable<T>> GetAllAsync(IEnumerable<Id> ids);
-    Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate);
+    Task<IEnumerable<T>> GetAllAsync(Func<T, bool> predicate);
 
     Task<bool> ContainsAsync(T entity);
     Task<bool> ContainsIdAsync(Id id);
