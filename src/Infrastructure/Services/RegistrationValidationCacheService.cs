@@ -9,6 +9,6 @@ public sealed class RegistrationValidationCacheService(
     public override TimeSpan CacheDuration { get; } = registrationValidationRequestExpiry;
 
     public RegistrationValidationCacheService(IConfiguration configuration) : this(
-        registrationValidationRequestExpiry : TimeSpan.Parse(configuration["RegistrationValidationRequestExpiry"]!)
+        registrationValidationRequestExpiry : TimeSpan.Parse(configuration["Pin:RegistrationValidationRequestExpiry"]!)
     ) {}
 }

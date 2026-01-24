@@ -4,10 +4,9 @@ using CesiZen.Domain.Aggregates.Content;
 using CesiZen.Domain.Aggregates.Diagnoses;
 using CesiZen.Domain.Aggregates.Core;
 using CesiZen.Infrastructure.Services;
-using FluentResponse;
 
 namespace CesiZen.Infrastructure.Core;
-public sealed class ApplicationDbContext : DbContext {
+public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options) {
 
     #region PROPERTIES
 
@@ -24,24 +23,16 @@ public sealed class ApplicationDbContext : DbContext {
 
     #endregion
     #region CONSTRUCTORS
-
-        public ApplicationDbContext() {}
+    
         public ApplicationDbContext(
             DbContextOptions<ApplicationDbContext> options,
             IEncryptionService                     encryptionService
-        ) : base(options) {
+        ) : this(options) {
             this.encryptionService = encryptionService;
         }
 
     #endregion
     #region METHODS
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-            if (!optionsBuilder.IsConfigured)
-                optionsBuilder.UseNpgsql(
-                    "Host=localhost:5432;Database=root;Username=root;Password=root"
-                );
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
 

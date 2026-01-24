@@ -7,6 +7,8 @@ using CesiZen.Application.Services;
 using CesiZen.Domain.Aggregates.Core;
 using CesiZen.Domain.Aggregates.Accounts.Events;
 using CesiZen.Application.EventListeners;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace CesiZen.Application.Core;
 public static partial class Extensions {
@@ -16,6 +18,25 @@ public static partial class Extensions {
     /// </summary>
     /// <param name="self">The app builder.</param>
     public static void InitApplication(this WebApplicationBuilder builder) {
+
+        // Searching for the solution root.
+        var assemblyLocation = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        if (assemblyLocation is not null) {
+
+            var directory = new DirectoryInfo(assemblyLocation);
+            while (directory is not null && directory.GetFiles("*.sln").Length == 0)
+                directory = directory.Parent;
+
+            if (directory is not null)
+                builder.Configuration
+                    .SetBasePath(directory.FullName)
+                    .AddEnvironmentVariables()
+                    .AddJsonFile(
+                        path     : $"appsettings.shared{(builder.Environment.IsDevelopment() ? ".Development" : "")}.json",
+                        optional : false
+                    );
+        }
+        
 
         builder.Services.AddScoped<ICommandService<Admin>,             CommandService<Admin>>();
         builder.Services.AddScoped<ICommandService<User>,              CommandService<User>>();

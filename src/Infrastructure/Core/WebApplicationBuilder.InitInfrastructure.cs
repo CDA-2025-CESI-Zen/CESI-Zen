@@ -6,8 +6,7 @@ using CesiZen.Domain.Aggregates.Content;
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Diagnoses;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Configuration;
 
 namespace CesiZen.Infrastructure.Core;
 public static partial class Extensions {
@@ -18,7 +17,9 @@ public static partial class Extensions {
     /// <param name="self">The app builder.</param>
     public static void InitInfrastructure(this WebApplicationBuilder builder) {
 
-        builder.Services.AddDbContext<DbContext, ApplicationDbContext>();
+        builder.Services.AddDbContext<DbContext, ApplicationDbContext>(x =>
+            x.UseNpgsql(builder.Configuration.GetConnectionString())
+        );
 
         builder.Services.AddScoped<IRepository<Admin>,             Repository<Admin>>();
         builder.Services.AddScoped<IRepository<User>,              Repository<User>>();

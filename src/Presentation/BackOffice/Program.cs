@@ -3,7 +3,8 @@ using CesiZen.Infrastructure.Core;
 using CesiZen.Application.Core;
 using CesiZen.Presentation.BackOffice.Core;
 using CesiZen.Domain.Aggregates.Accounts;
-using CesiZen.Application.Services;
+using CesiZen.Domain.Aggregates.Core;
+using FluentResponse;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,14 +21,13 @@ if (!app.Environment.IsDevelopment()) {
 
 app.UseHttpsRedirection();
 app.UseAntiforgery();
-
 app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
     
 using (var scope = app.Services.CreateScope()) {
     await scope.ServiceProvider
-        .GetRequiredService<ICommandService<Admin>>()
-        .TryCreateAsync(() => Admin.TryCreate(builder.Configuration["ROOT_USER"]!, builder.Configuration["ROOT_PASSWORD"]!));
+        .GetRequiredService<IRepository<Admin>>()
+        .TryAddAsync(Admin.TryCreate(builder.Configuration["Root:MailAddress"]!, builder.Configuration["Root:Password"]!).Unwrap());
 }
 
 app.Run();

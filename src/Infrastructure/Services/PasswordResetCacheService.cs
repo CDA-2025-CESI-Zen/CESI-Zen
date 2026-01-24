@@ -9,6 +9,6 @@ public sealed class PasswordResetCacheService(
     public override TimeSpan CacheDuration { get; } = passwordResetRequestExpiry;
 
     public PasswordResetCacheService(IConfiguration configuration) : this(
-        passwordResetRequestExpiry : TimeSpan.Parse(configuration["PasswordResetRequestExpiry"]!)
+        passwordResetRequestExpiry : TimeSpan.Parse(configuration["Pin:PasswordResetRequestExpiry"]!)
     ) {}
 }
