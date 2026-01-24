@@ -1,4 +1,4 @@
 namespace CesiZen.Presentation.FrontOffice.Api.Resources;
-public readonly record struct Link(HttpMethod Method, string Href) {
-    public Link(HttpMethod Method = default, params object[] values) : this(Method, string.Join('/', values)) {}
+public readonly record struct Link(string Href, HttpMethod Method) {
+    public Link(HttpMethod method = default, params object[] values) : this(string.Join('/', values), method) {}
 }

@@ -38,6 +38,19 @@ public static partial class Extensions {
     }
 
     /// <summary>
+    /// Converts a <see cref="IEnumerable{TValue}"/> to an array of HATEOAS resource swrapped in an HTTP response.
+    /// </summary>
+    /// <typeparam name="TValue">Value type.</typeparam>
+    /// <typeparam name="TResource">Resource type.</typeparam>
+    /// <returns>An HTTP reponse</returns>
+    public static IResult ToResource<TValue, TResource>(
+        this IEnumerable<TValue>              self,
+        Func<IEnumerable<TResource>, IResult> transform
+    ) where TResource : IResource<TResource, TValue> {
+        return transform(TResource.From(self));
+    }
+
+    /// <summary>
     /// Converts a <see cref="IResponse{TValue}"/> to an HATEOAS resource wrapped in an HTTP response.
     /// </summary>
     /// <typeparam name="TValue">Reponse value type.</typeparam>
@@ -60,4 +73,16 @@ public static partial class Extensions {
         Func<ISuccess<IEnumerable<TResource>>, IResult> onSuccess
     ) where TResource : IResource<TResource, TValue> =>
         (await task).ToResource(onSuccess);
+
+    /// <summary>
+    /// Converts a <see cref="IEnumerable{TValue}"/> to an array of HATEOAS resource swrapped in an HTTP response.
+    /// </summary>
+    /// <typeparam name="TValue">Value type.</typeparam>
+    /// <typeparam name="TResource">Resource type.</typeparam>
+    /// <returns>An HTTP reponse</returns>
+    public static async Task<IResult> ToResourceAsync<TValue, TResource>(
+        this Task<IEnumerable<TValue>>        task,
+        Func<IEnumerable<TResource>, IResult> transform
+    ) where TResource : IResource<TResource, TValue> =>
+        (await task).ToResource(transform);
 }

@@ -5,7 +5,6 @@ using CesiZen.Presentation.FrontOffice.Api.Extensions;
 using CesiZen.Presentation.FrontOffice.Api.Resources;
 using FluentResponse;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CesiZen.Presentation.FrontOffice.Api.Controllers;
@@ -66,7 +65,7 @@ public class UserController(
             sessionService
                 .TryRegisterAsync(dto.MailAddress, dto.Password, dto.Pin)
                 .ToResourceAsync<UserSession, UserSessionResource>(x => Results.CreatedAtRoute(
-                    routeName   : nameof(GetAsync),
+                    routeName   : nameof(GetUserAsync),
                     routeValues : new { x.Value.Id },
                     value       : x
                 ));
@@ -77,9 +76,9 @@ public class UserController(
                 .TryAuthAsync(dto.MailAddress, dto.Password)
                 .ToResourceAsync<UserSession, UserSessionResource>(Results.Ok);
 
-        [HttpGet("{id}", Name = nameof(GetAsync))]
+        [HttpGet("{id}", Name = nameof(GetUserAsync))]
         [Authorize(Policy = "LimitedUserAccess")]
-        public Task<IResult> GetAsync(Id id) =>
+        public Task<IResult> GetUserAsync(Id id) =>
             queryService.TryGetAsync(id).ToResourceAsync<User, UserResource>(Results.Ok);
 
         [HttpPatch("{id}")]
