@@ -18,7 +18,11 @@
     <MudTabPanel Text="Utilisateurs" Style="min-width: 70%; margin: 0 auto">
         <Users />
     </MudTabPanel>
-    <MudTabPanel Text="Administrateurs" Style="min-width: 70%; margin: 0 auto">
-        <Admins />
-    </MudTabPanel>
+    <AuthorizeView Policy="RootOnly">
+        <Authorized>
+            <MudTabPanel Text="Administrateurs" Style="min-width: 70%; margin: 0 auto">
+                <Admins />
+            </MudTabPanel>
+        </Authorized>
+    </AuthorizeView>
 </MudTabs>

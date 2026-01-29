@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Blazored.LocalStorage;
 using CesiZen.Presentation.BackOffice.Services;
@@ -43,7 +44,16 @@ public static partial class Extensions {
             };
         });
 
-        builder.Services.AddAuthorizationCore();
+        builder.Services.AddAuthorizationCore(options => {
+            options.AddPolicy("RootOnly", policy =>
+                policy.RequireAssertion(context => {
+
+                    var mailAddress = context.User.FindFirstValue(ClaimTypes.Email);
+                    return !string.IsNullOrEmpty(mailAddress)
+                        && builder.Configuration.IsRoot(mailAddress);
+                }));
+        });
+
         builder.Services.AddCascadingAuthenticationState();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddBlazoredLocalStorage();

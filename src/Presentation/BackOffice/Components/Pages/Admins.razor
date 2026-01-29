@@ -1,6 +1,7 @@
 ﻿@using CesiZen.Application.Services
 @using CesiZen.Domain.Aggregates.Accounts
 @using CesiZen.Domain.Aggregates.Accounts.ValueObjects
+@using CesiZen.Presentation.BackOffice.Core
 @using FluentResponse
 @using FluentResponse.Interfaces
 @using System.Security.Claims
@@ -8,6 +9,7 @@
 @inject IQueryService<Admin> queryService
 @inject ICommandService<Admin> commandService
 @inject ISnackbar snackbar
+@inject IConfiguration configuration
 
 <MudDataGrid
     @ref="@grid"
@@ -49,7 +51,8 @@
         </TemplateColumn>
         <TemplateColumn>
             <CellTemplate>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))" Disabled="@(items.Count() == 1)"/>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" Disabled="@(configuration.IsRoot(context.Item.MailAddress))"/>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))" Disabled="@(configuration.IsRoot(context.Item.MailAddress))"/>
             </CellTemplate>
         </TemplateColumn>
     </Columns>
@@ -96,6 +99,13 @@
             await commandService
                 .TryCreateAsync(() => Admin.TryCreate(item.MailAddress, password))
                 .OnSuccessAsync(_ => OnInitializedAsync())
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+        else
+            await commandService
+                .TryUpdateAsync(item.Id, x => x
+                    .TryWithMailAddress(item.MailAddress)
+                    .OnSuccess(x => x.TryWithPassword(password))
+                ).OnSuccessAsync(_ => OnInitializedAsync())
                 .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
     }
 
