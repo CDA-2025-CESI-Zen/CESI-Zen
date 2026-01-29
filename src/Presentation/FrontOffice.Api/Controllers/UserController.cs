@@ -61,6 +61,7 @@ public class UserController(
     #region ROUTES
 
         [HttpPost("/register")]
+        [EndpointDescription("Tries to register using the PIN code associated with the wanted mail address.")]
         public Task<IResult> RegisterAsync(RegisterDto dto) =>
             sessionService
                 .TryRegisterAsync(dto.MailAddress, dto.Password, dto.Pin)
@@ -71,12 +72,14 @@ public class UserController(
                 ));
 
         [HttpPost("/auth")]
+        [EndpointDescription("Tries to start a session.")]
         public Task<IResult> AuthAsync(AuthDto dto) =>
             sessionService
                 .TryAuthAsync(dto.MailAddress, dto.Password)
                 .ToResourceAsync<UserSession, UserSessionResource>(Results.Ok);
 
         [HttpPost("/reset-password")]
+        [EndpointDescription("Tries to reset a password using the PIN code associated with the wanted mail address.")]
         public Task<IResult> ResetPasswordAsync(ResetPasswordDto dto) =>
             sessionService
                 .TryResetPasswordAsync(dto.MailAddress, dto.NewPassword, dto.Pin)
@@ -84,11 +87,15 @@ public class UserController(
 
         [HttpGet("{id}", Name = nameof(GetUserAsync))]
         [Authorize(Policy = "LimitedUserAccess")]
+        [EndpointSummary("Only accessible for this user")]
+        [EndpointDescription("Queries the user.")]
         public Task<IResult> GetUserAsync(Id id) =>
             queryService.TryGetAsync(id).ToResourceAsync<User, UserResource>(Results.Ok);
 
         [HttpPatch("{id}")]
         [Authorize(Policy = "LimitedUserAccess")]
+        [EndpointSummary("Only accessible for this user")]
+        [EndpointDescription("Tries to update the user.")]
         public Task<IResult> UpdateAsync(Id id, UpdateAccountDto dto) =>
             sessionService
                 .TryUpdateAsync(id, dto.Password, user => {
@@ -103,6 +110,8 @@ public class UserController(
 
         [HttpPost("{id}/save-diagnosis-result")]
         [Authorize(Policy = "LimitedUserAccess")]
+        [EndpointSummary("Only accessible for this user")]
+        [EndpointDescription("Tries to save a diagnosis result for the user.")]
         public Task<IResult> SaveDiagnosisResult(Id id, SaveDiagnosisResultDto dto) =>
             diagnosisResultService
                 .TrySaveDiagnosisResult(id, dto.DiagnosisItemIds)
@@ -110,6 +119,8 @@ public class UserController(
 
         [HttpPost("{id}/anonymize")]
         [Authorize(Policy = "LimitedUserAccess")]
+        [EndpointSummary("Only accessible for this user")]
+        [EndpointDescription("Tries to anonymize the user.")]
         public Task<IResult> AnonymizeAsync(Id id, CloseAccountDto dto) =>
             sessionService
                 .TryAnonymizeAsync(id, dto.Password)
@@ -117,18 +128,22 @@ public class UserController(
 
         [HttpDelete("{id}")]
         [Authorize(Policy = "LimitedUserAccess")]
+        [EndpointSummary("Only accessible for this user")]
+        [EndpointDescription("Tries to delete the user.")]
         public Task<IResult> DeleteAsync(Id id, CloseAccountDto dto) =>
             sessionService
                 .TryDeleteAsync(id, dto.Password)
                 .ToResultAsync(Results.Ok);
 
         [HttpPost("/request-register")]
+        [EndpointDescription("Tries to request the generation of a registration PIN that will be associated with the mail address.")]
         public Task<IResult> RequestRegisterAsync(RequestPinGenerationDto dto) =>
             sessionService
                 .TryRequestRegistrationPINAsync(dto.MailAddress)
                 .ToResultAsync(Results.Ok);
 
         [HttpPost("/request-password-reset")]
+        [EndpointDescription("Tries to request the generation of a password reset PIN that will be associated with the account.")]
         public Task<IResult> RequestPasswordResetAsync(RequestPinGenerationDto dto) =>
             sessionService
                 .TryRequestPasswordResetPINAsync(dto.MailAddress)

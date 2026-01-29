@@ -17,10 +17,12 @@ public class PageController(
     #region ROUTES
 
         [HttpGet(Name = nameof(GetAllPagesAsync))]
+        [EndpointDescription("Queries all pages.")]
         public Task<IResult> GetAllPagesAsync() =>
             queryService.GetAllAsync().ToResourceAsync<Page, PageResource>(Results.Ok);
 
         [HttpGet("{id}", Name = nameof(GetPageAsync))]
+        [EndpointDescription("Queries a page using its ID.")]
         public Task<IResult> GetPageAsync(Id id) =>
             queryService.TryGetAsync(id).ToResourceAsync<Page, PageResource>(Results.Ok);
 

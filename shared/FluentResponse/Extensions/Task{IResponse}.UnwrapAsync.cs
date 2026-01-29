@@ -1,6 +1,7 @@
 using FluentResponse.Interfaces;
 
 namespace FluentResponse;
+/// <inheritdoc/>
 public static partial class Extensions {
 
     /// <inheritdoc cref="Unwrap(IResponse)"/>

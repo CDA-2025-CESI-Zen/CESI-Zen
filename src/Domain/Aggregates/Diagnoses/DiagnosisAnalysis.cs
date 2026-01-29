@@ -7,8 +7,11 @@ public record DiagnosisAnalysis : AggregateRoot<DiagnosisAnalysis> {
 
     #region PROPERTIES
 
-        public int    ScoreThreshold { get; protected init; }
-        public string Content        { get; protected init; } = null!;
+        /// <summary> The lower end of this analysis' stress score range. </summary>
+        public int ScoreThreshold { get; internal init; }
+
+        /// <summary> The analysis' textual content. </summary>
+        public string Content { get; internal init; } = null!;
 
         public override Func<IRepository<DiagnosisAnalysis>, Task<IResponse<DiagnosisAnalysis>>>? RepositoryInvariant => async (repository) => 
             await repository.AnyAsync((x) => x.Id != this.Id && x.ScoreThreshold == this.ScoreThreshold)

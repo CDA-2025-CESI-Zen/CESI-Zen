@@ -9,8 +9,11 @@ public record Admin : AggregateRoot<Admin> {
 
     #region PROPERTIES
 
-        public AdminMailAddress MailAddress { get; protected init; } = null!;
-        public Password         Password    { get; protected init; }
+        /// <summary> The mail address of this admin. </summary>
+        public AdminMailAddress MailAddress { get; internal init; } = null!;
+
+        /// <summary> The encrypted password of this admin. </summary>
+        public Password Password { get; internal init; }
 
         public override Func<IRepository<Admin>, Task<IResponse<Admin>>>? RepositoryInvariant => async (repository) => 
             this.MailAddress.Address is string mailAddress && await repository.AnyAsync((x) =>

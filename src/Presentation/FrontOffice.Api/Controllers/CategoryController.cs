@@ -17,10 +17,12 @@ public class CategoryController(
     #region ROUTES
 
         [HttpGet(Name = nameof(GetAllCategoriesAsync))]
+        [EndpointDescription("Queries all categories.")]
         public Task<IResult> GetAllCategoriesAsync() =>
             queryService.GetAllAsync().ToResourceAsync<Category, CategoryResource>(Results.Ok);
 
         [HttpGet("{id}", Name = nameof(GetCategoryAsync))]
+        [EndpointDescription("Queries a category using its ID.")]
         public Task<IResult> GetCategoryAsync(Id id) =>
             queryService.TryGetAsync(id).ToResourceAsync<Category, CategoryResource>(Results.Ok);
 

@@ -8,8 +8,11 @@ public record DiagnosisItem : AggregateRoot<DiagnosisItem> {
 
     #region PROPERTIES
 
-        public EventLabel EventLabel { get; protected init; }
-        public int        Score      { get; protected init; }
+        /// <summary> The label of this diagnosis item event. </summary>
+        public EventLabel EventLabel { get; internal init; }
+
+        /// <summary> The stress score associated with this diagnosis item. </summary>
+        public int Score { get; internal init; }
 
     #endregion
     #region CONSTRUCTORS
