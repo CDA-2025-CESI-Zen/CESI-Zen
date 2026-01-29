@@ -9,16 +9,16 @@ public record User : AggregateRoot<User> {
 
     #region PROPERTIES
 
-        public UserMailAddress? MailAddress { get; protected init; }
-        public Password         Password    { get; protected init; }
+        public UserMailAddress? MailAddress { get; internal init; }
+        public Password         Password    { get; internal init; }
 
-        public DateTime FirstActivity { get; protected init; } = DateTime.UtcNow;
-        public DateTime LastActivity  { get; protected init; } = DateTime.UtcNow;
+        public DateTime FirstActivity { get; internal init; } = DateTime.UtcNow;
+        public DateTime LastActivity  { get; internal init; } = DateTime.UtcNow;
 
-        public UserDiagnosisResult? FirstDiagnosisResult { get; protected init; }
-        public UserDiagnosisResult? LastDiagnosisResult  { get; protected init; }
+        public UserDiagnosisResult? FirstDiagnosisResult { get; internal init; }
+        public UserDiagnosisResult? LastDiagnosisResult  { get; internal init; }
 
-        public DateTime? AnonymizationProcessStartedAt { get; protected init; }
+        public DateTime? AnonymizationProcessStartedAt { get; internal init; }
 
         public bool IsAnonymous => this.MailAddress is null;
 

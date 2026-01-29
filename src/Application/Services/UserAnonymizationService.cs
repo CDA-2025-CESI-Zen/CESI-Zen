@@ -1,6 +1,5 @@
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Core;
-using CesiZen.Infrastructure.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -26,13 +25,12 @@ public class UserAnonymizationService(
                 await HandleAsync();
         }
 
-        private async Task HandleAsync() {
+        public async Task HandleAsync() {
 
             logger.LogInformation($"Parsing users.");
 
             using var scope = serviceProvider.CreateScope();
             var repository  = scope.ServiceProvider.GetRequiredService<IRepository<User>>();
-            var mailService = scope.ServiceProvider.GetRequiredService<IMailService>();
 
             var now = DateTime.UtcNow;
 
@@ -44,7 +42,7 @@ public class UserAnonymizationService(
 
                 else if (inactiveUser.AnonymizationProcessStartedAt is null)
                     await repository.TryUpdateAsync(inactiveUser.Id, x => x.TryStartAnonymizationProcess());
-    }
+        }
 
         private static int MonthsSinceLastActivity(DateTime lastActivity, DateTime now) =>
             (now.Year - lastActivity.Year) * 12 + now.Month - lastActivity.Month + (now.Day >= lastActivity.Day ? 0 : -1);
