@@ -9,16 +9,6 @@ builder.InitApplication();
 builder.InitPresentation();
 
 var app = builder.Build();
-if (app.Environment.IsDevelopment()) {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-app.UseHsts();
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseCors("AllowAll");
-app.MapControllers();
+app.FinalizePresentation();
 
 app.Run();
