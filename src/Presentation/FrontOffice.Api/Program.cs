@@ -1,7 +1,6 @@
 using CesiZen.Application.Core;
 using CesiZen.Infrastructure.Core;
 using CesiZen.Presentation.FrontOffice.Api.Core;
-using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
