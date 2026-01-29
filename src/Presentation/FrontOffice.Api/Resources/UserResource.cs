@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using CesiZen.Domain.Aggregates.Accounts;
-using CesiZen.Domain.Aggregates.Accounts.ValueObjects;
 using CesiZen.Presentation.FrontOffice.Api.Controllers;
 
 namespace CesiZen.Presentation.FrontOffice.Api.Resources;
@@ -12,9 +11,9 @@ public class UserResource(User user) : IResource<UserResource, User> {
         public Id Id { get; } = user.Id;
 
         public string? MailAddress { get; } = user.MailAddress?.Address;
-
-        public UserDiagnosisResult? FirstDiagnosisResult { get; } = user.FirstDiagnosisResult;
-        public UserDiagnosisResult? LastDiagnosisResult  { get; } = user.LastDiagnosisResult;
+        
+        public string FirstActivity { get; } = user.FirstActivity.ToShortDateString();
+        public int? LastDiagnosisResult { get; } = user.LastDiagnosisResult?.Score;
 
         public UserLinks Links { get; } = new(
             Self                : new (HttpMethod.GET,  UserController.ROUTE, user.Id),

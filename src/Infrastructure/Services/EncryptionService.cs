@@ -17,7 +17,7 @@ public sealed class EncryptionService(string key) : IEncryptionService {
     #endregion
     #region CONSTRUCTORS
 
-        public EncryptionService(IConfiguration configuration) : this(configuration["Encryption:Key"]!) {}
+        public EncryptionService(IConfiguration configuration) : this(configuration["DB:EncryptionKey"]!) {}
 
     #endregion
     #region METHODS

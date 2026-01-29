@@ -1,0 +1,29 @@
+using CesiZen.Application.Services;
+using CesiZen.Domain.Aggregates.Diagnoses;
+using CesiZen.Presentation.FrontOffice.Api.Extensions;
+using CesiZen.Presentation.FrontOffice.Api.Resources;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CesiZen.Presentation.FrontOffice.Api.Controllers;
+
+[ApiController]
+[Route(ROUTE)]
+public class DiagnosisAnalysisController(
+    IQueryService<DiagnosisAnalysis> queryService
+) : ControllerBase {
+
+    public const string ROUTE = "/diagnosis-analyses";
+
+    #region ROUTES
+
+        [HttpGet(Name = nameof(GetAllDiagnosisAnalysesAsync))]
+        public Task<IResult> GetAllDiagnosisAnalysesAsync() =>
+            queryService.GetAllAsync().ToResourceAsync<DiagnosisAnalysis, DiagnosisAnalysisResource>(Results.Ok);
+
+        [HttpGet("{id}", Name = nameof(GetDiagnosisAnalysisAsync))]
+        public Task<IResult> GetDiagnosisAnalysisAsync(Id id) =>
+            queryService.TryGetAsync(id).ToResourceAsync<DiagnosisAnalysis, DiagnosisAnalysisResource>(Results.Ok);
+
+    #endregion
+
+}

@@ -15,17 +15,11 @@ if (app.Environment.IsDevelopment()) {
     app.UseSwaggerUI();
 }
 
-var options = new ForwardedHeadersOptions {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-};
-
-options.KnownIPNetworks.Clear();
-options.KnownProxies.Clear();
-
-app.UseForwardedHeaders(options);
 app.UseHttpsRedirection();
+app.UseHsts();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("AllowAll");
 app.MapControllers();
 
 app.Run();

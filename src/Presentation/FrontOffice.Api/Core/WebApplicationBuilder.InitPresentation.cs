@@ -39,6 +39,15 @@ public static partial class Extensions {
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("LimitedUserAccess", policy => policy.Requirements.Add(new UserAuthorizationRequirement()));
 
+        builder.Services.AddCors(options => {
+            options.AddPolicy("AllowAll",
+                builder => builder
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+            );
+        });
+
         builder.Services.AddScoped<IAuthorizationHandler, UserAuthorizationHandler>();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options => {

@@ -44,10 +44,10 @@ public static partial class Extensions {
     /// <typeparam name="TResource">Resource type.</typeparam>
     /// <returns>An HTTP reponse</returns>
     public static IResult ToResource<TValue, TResource>(
-        this IEnumerable<TValue>              self,
-        Func<IEnumerable<TResource>, IResult> transform
+        this IEnumerable<TValue>                        self,
+        Func<ISuccess<IEnumerable<TResource>>, IResult> transform
     ) where TResource : IResource<TResource, TValue> {
-        return transform(TResource.From(self));
+        return transform((ISuccess<IEnumerable<TResource>>)Response.Success(TResource.From(self)));
     }
 
     /// <summary>
@@ -81,8 +81,8 @@ public static partial class Extensions {
     /// <typeparam name="TResource">Resource type.</typeparam>
     /// <returns>An HTTP reponse</returns>
     public static async Task<IResult> ToResourceAsync<TValue, TResource>(
-        this Task<IEnumerable<TValue>>        task,
-        Func<IEnumerable<TResource>, IResult> transform
+        this Task<IEnumerable<TValue>>                  task,
+        Func<ISuccess<IEnumerable<TResource>>, IResult> transform
     ) where TResource : IResource<TResource, TValue> =>
         (await task).ToResource(transform);
 }

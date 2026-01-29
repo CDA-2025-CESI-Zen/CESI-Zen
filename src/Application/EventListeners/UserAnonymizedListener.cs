@@ -16,7 +16,7 @@ public sealed class UserAnonymizedListener(
             user.MailAddress!,
             "Désactivation de votre compte CESI Zen",
             $"""
-            Votre compte CESI Zen a été désactivé et anonymisé pour cause d'inactivité.
+            Votre compte CESI Zen a été désactivé et anonymisé.
             """
         ));
 }

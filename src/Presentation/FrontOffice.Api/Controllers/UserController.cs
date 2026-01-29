@@ -76,6 +76,12 @@ public class UserController(
                 .TryAuthAsync(dto.MailAddress, dto.Password)
                 .ToResourceAsync<UserSession, UserSessionResource>(Results.Ok);
 
+        [HttpPost("/reset-password")]
+        public Task<IResult> ResetPasswordAsync(ResetPasswordDto dto) =>
+            sessionService
+                .TryResetPasswordAsync(dto.MailAddress, dto.NewPassword, dto.Pin)
+                .ToResourceAsync<UserSession, UserSessionResource>(Results.Ok);
+
         [HttpGet("{id}", Name = nameof(GetUserAsync))]
         [Authorize(Policy = "LimitedUserAccess")]
         public Task<IResult> GetUserAsync(Id id) =>
@@ -97,7 +103,7 @@ public class UserController(
 
         [HttpPost("{id}/save-diagnosis-result")]
         [Authorize(Policy = "LimitedUserAccess")]
-        public Task<IResult> AnonymizeAsync(Id id, SaveDiagnosisResultDto dto) =>
+        public Task<IResult> SaveDiagnosisResult(Id id, SaveDiagnosisResultDto dto) =>
             diagnosisResultService
                 .TrySaveDiagnosisResult(id, dto.DiagnosisItemIds)
                 .ToResultAsync(Results.Ok);
@@ -107,14 +113,14 @@ public class UserController(
         public Task<IResult> AnonymizeAsync(Id id, CloseAccountDto dto) =>
             sessionService
                 .TryAnonymizeAsync(id, dto.Password)
-                .ToResultAsync(_ => Results.Ok());
+                .ToResultAsync(Results.Ok);
 
         [HttpDelete("{id}")]
         [Authorize(Policy = "LimitedUserAccess")]
         public Task<IResult> DeleteAsync(Id id, CloseAccountDto dto) =>
             sessionService
                 .TryDeleteAsync(id, dto.Password)
-                .ToResultAsync(_ => Results.Ok());
+                .ToResultAsync(Results.Ok);
 
         [HttpPost("/request-register")]
         public Task<IResult> RequestRegisterAsync(RequestPinGenerationDto dto) =>
