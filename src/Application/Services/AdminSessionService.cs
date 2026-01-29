@@ -10,6 +10,7 @@ public sealed class AdminSessionService(
     IRepository<Admin> repository,
     IAdminAuthService  authService
 ) : IAdminSessionService {
+    
     public async Task<IResponse<AdminSession>> TryAuthAsync(string mailAddress, string password) =>
         await repository
             .TryGetAsync(admin => admin.MailAddress.Address == mailAddress)
@@ -17,12 +18,4 @@ public sealed class AdminSessionService(
                 .TryVerifyPassword(password)
                 .OnSuccess(() => new AdminSession(authService.GenerateToken(admin), admin))
             );
-
-    public async Task<IResponse<AdminSession>> TryUpdateAsync(Id id, string password, Func<Admin, IResponse<Admin>> transform) =>
-        await repository
-            .TryGetAsync(id)
-            .OnSuccessAsync(admin => admin
-                .TryVerifyPassword(password)
-                .OnSuccessAsync(() => repository.TryUpdateAsync(id, transform))
-            ).OnSuccessAsync(admin => new AdminSession(authService.GenerateToken(admin), admin));
 }

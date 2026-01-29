@@ -17,10 +17,12 @@ public class DiagnosisItemController(
     #region ROUTES
 
         [HttpGet(Name = nameof(GetAllDiagnosisItemsAsync))]
+        [EndpointDescription("Queries all diagnosis items.")]
         public Task<IResult> GetAllDiagnosisItemsAsync() =>
             queryService.GetAllAsync().ToResourceAsync<DiagnosisItem, DiagnosisItemResource>(Results.Ok);
 
         [HttpGet("{id}", Name = nameof(GetDiagnosisItemAsync))]
+        [EndpointDescription("Queries a diagnosis item using its ID.")]
         public Task<IResult> GetDiagnosisItemAsync(Id id) =>
             queryService.TryGetAsync(id).ToResourceAsync<DiagnosisItem, DiagnosisItemResource>(Results.Ok);
 

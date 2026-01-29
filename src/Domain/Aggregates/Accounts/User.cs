@@ -9,18 +9,38 @@ public record User : AggregateRoot<User> {
 
     #region PROPERTIES
 
-        public UserMailAddress? MailAddress { get; protected init; }
-        public Password         Password    { get; protected init; }
+        /// <summary> The mail address of this user. If none, the user is anonymized. </summary>
+        public UserMailAddress? MailAddress { get; internal init; }
 
-        public DateTime FirstActivity { get; protected init; } = DateTime.UtcNow;
-        public DateTime LastActivity  { get; protected init; } = DateTime.UtcNow;
+        /// <summary> The encrypted password of this user. </summary>
+        public Password Password { get; internal init; }
 
-        public UserDiagnosisResult? FirstDiagnosisResult { get; protected init; }
-        public UserDiagnosisResult? LastDiagnosisResult  { get; protected init; }
 
-        public DateTime? AnonymizationProcessStartedAt { get; protected init; }
 
+        /// <summary> The date of the first activity of this user. </summary>
+        public DateTime FirstActivity { get; internal init; } = DateTime.UtcNow;
+
+        /// <summary> The date of the last activity of this user. </summary>
+        public DateTime LastActivity { get; internal init; } = DateTime.UtcNow;
+
+
+
+        /// <summary> The first diagnosis' result of this user. </summary>
+        public UserDiagnosisResult? FirstDiagnosisResult { get; internal init; }
+
+        /// <summary> The latest diagnosis' result of this user. </summary>
+        public UserDiagnosisResult? LastDiagnosisResult { get; internal init; }
+
+
+        /// <summary> The date at which the user's automatic anonymization process started, if any. </summary>
+        public DateTime? AnonymizationProcessStartedAt { get; internal init; }
+
+
+
+        /// <summary> Whether or not the user has been anonymized. </summary>
         public bool IsAnonymous => this.MailAddress is null;
+
+
 
         public override Func<IRepository<User>, Task<IResponse<User>>>? RepositoryInvariant => async (repository) => 
             this.MailAddress?.Address is string mailAddress && await repository.AnyAsync((x) =>
