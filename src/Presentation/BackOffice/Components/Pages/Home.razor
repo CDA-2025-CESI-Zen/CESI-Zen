@@ -1,0 +1,75 @@
+﻿@page "/"
+@using CesiZen.Application.Services
+@using CesiZen.Domain.Aggregates.Accounts.ValueObjects
+@using CesiZen.Presentation.BackOffice.Services
+@using FluentResponse
+@using FluentResponse.Interfaces
+@using Microsoft.AspNetCore.Authentication
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+
+@inject ISnackbar snackbar
+@inject IAdminSessionService adminSessionService
+@inject IHttpContextAccessor  httpContext
+@inject JwtAuthenticationStateProvider authenticationStateProvider
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Se connecter à CESI Zen</PageTitle>
+<MudContainer MaxWidth="MaxWidth.Small" Class="pa-10">
+    <EditForm FormName="Login" Model="@model" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator/>
+        <MudCard Elevation="0" Class="py-10 px-20" Style="background-color: var(--mud-palette-background-gray)">
+            <MudText Typo="Typo.h6" GutterBottom="true"><b>Connexion au panneau d'administration de CESI Zen</b></MudText>
+            <br/>
+            <MudCardContent>
+                <MudTextField
+                    Label="Identifiant"
+                    HelperText="Format attendu : nom@cesizen.fr"
+                    @bind-Value="model.MailAddress"
+                    For="@(() => model.MailAddress)"
+                    Validation="@((string value) => ValidateMailAddress(value))"
+                    InputType="@InputType.Email"
+                />
+                <MudTextField
+                    Label="Mot de passe"
+                    @bind-Value="model.Password"
+                    For="@(() => model.Password)"
+                    InputType="InputType.Password"
+                />
+            </MudCardContent>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Se connecter</MudButton>
+        </MudCard>
+    </EditForm>
+</MudContainer>
+
+@code {
+    ViewModel model = new ViewModel();
+
+    public class ViewModel {
+        public string MailAddress { get; set; }
+        public string Password    { get; set; }
+    }
+
+    private string? ValidateMailAddress(string value) =>
+        (AdminMailAddress.TryCreate(value) as IFailure)?.ErrorMessage;
+
+
+    private async Task OnValidSubmit(EditContext context) {
+        await adminSessionService
+            .TryAuthAsync(model.MailAddress, model.Password)
+            .OnSuccessAsync(async session => {
+
+                var handler = new JwtSecurityTokenHandler();
+                var jwt = handler.ReadJwtToken(session.Token);
+                var identity = new ClaimsIdentity(jwt.Claims, "jwt");
+                var user = new ClaimsPrincipal(identity);
+                
+                authenticationStateProvider.NotifyUserAuthentication(session.Token);
+                navigationManager.NavigateTo("/panel");
+
+            }).OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+        
+        StateHasChanged();
+    }
+}

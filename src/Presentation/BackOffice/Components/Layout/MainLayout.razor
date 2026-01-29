@@ -1,0 +1,77 @@
+﻿@using CesiZen.Presentation.BackOffice.Components.Pages
+@using CesiZen.Presentation.BackOffice.Services
+@using Microsoft.AspNetCore.Authentication
+@inherits LayoutComponentBase
+@inject IHttpContextAccessor  httpContext
+@inject JwtAuthenticationStateProvider authenticationStateProvider
+@inject NavigationManager navigationManager
+
+<MudThemeProvider Theme="CesiZenTheme" IsDarkMode="false"/>
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudLayout>
+    <MudAppBar Elevation="1" Fixed="false">
+        <MudImage Src="images/logo-ministere.png" Height="100"/>
+        <MudImage Src="images/logo-cesizen.png" Height="100"/>
+        <MudSpacer />
+        <CascadingAuthenticationState>
+            <AuthorizeView>
+                <Authorized>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.Logout" Color="Color.Primary" Edge="Edge.End" OnClick="@OnLogOut">
+                        Se déconnecter
+                    </MudButton>
+                </Authorized>
+                <NotAuthorized>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Rounded.Logout" Color="Color.Primary" Edge="Edge.End">
+                        Se connecter
+                    </MudButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </CascadingAuthenticationState>
+    </MudAppBar>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+
+<div id="blazor-error-ui" data-nosnippet>
+    Une erreur vient d'arriver
+    <a href="." class="reload">Recharger</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private async Task OnLogOut() {
+        authenticationStateProvider.NotifyUserLogout();
+        navigationManager.NavigateTo("/");
+    }
+
+    public static MudTheme CesiZenTheme = new MudTheme() {
+        Typography = new Typography() {
+            Default = new DefaultTypography() {
+                FontFamily = ["Marianne"]
+            },
+            Button = new ButtonTypography() {
+                TextTransform = "none"
+            }
+        },
+        PaletteLight = new() {
+            Primary          = "#000091",
+            Secondary        = "#6a6af4",
+            Black            = "#110e2d",
+            AppbarText       = "#110e2d",
+            AppbarBackground = "#ffffff",
+            DrawerBackground = "#ffffff",
+            GrayLight        = "#e8e8e8",
+            GrayLighter      = "#f9f9f9",
+            Warning          = "#c9191e",
+        },
+        LayoutProperties = new LayoutProperties() {
+            AppbarHeight = "auto"
+        }
+    };
+}
+
+

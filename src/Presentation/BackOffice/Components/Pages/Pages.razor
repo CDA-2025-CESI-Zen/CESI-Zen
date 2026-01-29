@@ -1,0 +1,143 @@
+﻿@using CesiZen.Application.Services
+@using CesiZen.Domain.Aggregates.Content
+@using CesiZen.Domain.Aggregates.Content.ValueObjects
+@using FluentResponse
+@using FluentResponse.Interfaces
+
+@using ContentPage = CesiZen.Domain.Aggregates.Content.Page
+
+@inject IQueryService<Category> categoryQueryService
+@inject IQueryService<ContentPage> queryService
+@inject ICommandService<ContentPage> commandService
+@inject ISnackbar snackbar
+
+<MudDataGrid
+    @ref="@grid"
+    T="ViewModel"
+    Items="@items"
+    ReadOnly="false" 
+    EditMode="@DataGridEditMode.Form"
+    CommittedItemChanges="@CommittedItemChangesAsync"
+    EditDialogOptions="@(new DialogOptions() { FullWidth = true, MaxWidth = MaxWidth.Small })"
+    Elevation="0"
+    Dense="true"
+    Class="px-4"
+    Style="background-color: var(--mud-palette-background-gray)"
+>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Pages de contenu</MudText>
+        <MudSpacer />
+        <MudButtonGroup Class="ma-0 pa-0" Color="@Color.Primary" Variant="@Variant.Filled">
+            <MudButton OnClick="NewItemAsync">
+                Ajouter une page
+            </MudButton>
+        </MudButtonGroup>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Title="Titre" Property="x => x.Title">
+            <EditTemplate>
+                <MudTextField
+                    @bind-Value="context.Item.Title"
+                    Margin="@Margin.Dense"
+                    Typo="Typo.h6"
+                    Validation="@((string value) => ValidateTitle(value))"
+                />
+            </EditTemplate>
+        </PropertyColumn>
+        <PropertyColumn Title="Catégorie" Property="@(x => x.CategoryTitle)">
+            <EditTemplate>
+                <MudSelect @bind-Value="context.Item.CategoryId" Required RequiredError="Une catégorie doit être sélectionnée" Margin="@Margin.Dense" Validation="@((Id value) => ValidateCategory(value))">
+                    <MudSelectItem Value="0u">Aucune catégorie</MudSelectItem>
+                    @foreach (var category in categories) {
+                        <MudSelectItem Value="@category.Id">@category.Title.Value</MudSelectItem>
+                    }
+                </MudSelect>
+            </EditTemplate>
+        </PropertyColumn>
+        <PropertyColumn Title="Contenu" Property="x => x.Content" Hidden="true">
+            <EditTemplate>
+                <MudTextField
+                    @bind-Value="context.Item.Content"
+                    Label="Contenu"
+                    Margin="@Margin.Dense"
+                    Variant="@Variant.Outlined"
+                    Lines="16"
+                />
+            </EditTemplate>
+        </PropertyColumn>
+        <TemplateColumn>
+            <CellTemplate>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))"/>
+            </CellTemplate>
+            <EditTemplate>
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Rounded.Delete" Color="Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))" Edge="Edge.End" Class="mt-2">
+                    Supprimer
+                </MudButton>
+            </EditTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="@ViewModel" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private class ViewModel {
+        public Id     Id            { get; set; } = default;
+        public string Title         { get; set; } = "Nouvelle page";
+        public string CategoryTitle { get; set; } = string.Empty;
+        public Id     CategoryId    { get; set; } = default;
+        public string Content       { get; set; } = "...";
+    }
+
+    private IEnumerable<Category> categories = [];
+    private IEnumerable<ViewModel> items = [];
+    private MudDataGrid<ViewModel> grid = default!;
+
+    protected override async Task OnInitializedAsync() {
+        items = (await queryService.GetAllAsync()).Select(x => new ViewModel {
+            Id            = x.Id,
+            Title         = x.Title.Value,
+            CategoryTitle = x.Category.Title.Value,
+            CategoryId    = x.Category.Id,
+            Content       = x.Content
+        }).OrderByDescending(x => x.Id);
+
+        categories = await categoryQueryService.GetAllAsync();
+    }
+
+    private async Task NewItemAsync() {
+        await grid.SetEditingItemAsync(new ViewModel());
+    }
+
+    private async Task DeleteItemAsync(ViewModel item) {
+        await grid.CancelEditingItemAsync();
+        if (item.Id is not default(Id))
+            await commandService
+                .TryDeleteAsync(item.Id)
+                .OnSuccessAsync(OnInitializedAsync)
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task CommittedItemChangesAsync(ViewModel item) {
+        if (item.Id is not default(Id))
+            await commandService
+                .TryUpdateAsync(item.Id, x => x
+                    .WithContent(item.Content)
+                    .WithCategory(categories.Single(category => category.Id == item.CategoryId))
+                    .TryWithTitle(item.Title)
+                ).OnSuccessAsync(_ => OnInitializedAsync())
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+        else await commandService
+            .TryCreateAsync(() => ContentPage.TryCreate(item.Title, categories.Single(category => category.Id == item.CategoryId), item.Content))
+            .OnSuccessAsync(_ => OnInitializedAsync())
+            .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private string? ValidateTitle(string value) =>
+        (Title.TryCreate(value) as IFailure)?.ErrorMessage;
+
+    private string? ValidateCategory(Id value) =>
+        value is default(Id) ? "Une catégorie doit être sélectionnée !" : null;
+}

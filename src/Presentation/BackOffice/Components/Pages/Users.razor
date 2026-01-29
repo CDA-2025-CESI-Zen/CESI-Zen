@@ -1,0 +1,127 @@
+﻿@using CesiZen.Application.Services
+@using CesiZen.Domain.Aggregates.Accounts
+@using CesiZen.Domain.Aggregates.Accounts.ValueObjects
+@using FluentResponse
+@using FluentResponse.Interfaces
+
+@inject IQueryService<User> queryService
+@inject ICommandService<User> commandService
+@inject ISnackbar snackbar
+
+<MudDataGrid
+    @ref="@grid"
+    T="ViewModel"
+    Items="@items"
+    ReadOnly="false" 
+    EditMode="@DataGridEditMode.Form"
+    CommittedItemChanges="@CommittedItemChangesAsync"
+    Elevation="0"
+    Dense="true"
+    Class="px-4"
+    Style="background-color: var(--mud-palette-background-gray)"
+>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Utilisateurs</MudText>
+        <MudSpacer />
+        <MudButtonGroup Class="ma-0 pa-0" Color="@Color.Primary" Variant="@Variant.Filled">
+            <MudButton OnClick="NewItemAsync">
+                Ajouter un utilisateur
+            </MudButton>
+        </MudButtonGroup>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Title="Adresse électronique" Property="x => x.MailAddress">
+            <EditTemplate>
+                <MudTextField
+                    @bind-Value="context.Item.MailAddress"
+                    Label="Adresse électronique"
+                    Validation="@((string value) => ValidateMailAddress(value))"
+                    InputType="@InputType.Email"
+                />
+            </EditTemplate>
+        </PropertyColumn>
+        <PropertyColumn Title="Compte créé le" Property="x => x.FirstActivity" Editable="false" />
+        <PropertyColumn Title="Anonymisé" Property="x => x.Anonymized" Editable="false">
+            <CellTemplate>
+                <MudCheckBox Value="context.Item.Anonymized" ReadOnly="true" />
+            </CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn>
+            <EditTemplate>
+                <MudTextField Label="Mot de passe" @bind-Value="@password" InputType="InputType.Password" Validation="@((string value) => ValidatePassword(value))"/>
+                <MudTextField Label="Confirmation" @bind-Value="@passwordConfirmation" InputType="InputType.Password" Validation="@((string value) => ValidatePasswordConfirmation(value))"/>
+            </EditTemplate>
+        </TemplateColumn>
+        <TemplateColumn>
+            <CellTemplate>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Rounded.LockPerson" Color="Color.Warning" OnClick="@(() => AnonymizeItemAsync(context.Item))" Disabled="@context.Item.Anonymized"/>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))"/>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="@ViewModel" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private class ViewModel {
+        public Id       Id            { get; set; } = default;
+        public string   MailAddress   { get; set; } = "nom@domaine.fr";
+        public bool     Anonymized    { get; set; }
+        public DateTime FirstActivity { get; set; }
+    }
+
+    private IEnumerable<ViewModel> items = [];
+    private MudDataGrid<ViewModel> grid = default!;
+    private string password = string.Empty;
+    private string passwordConfirmation= string.Empty;
+
+    protected override async Task OnInitializedAsync() {
+        items = (await queryService.GetAllAsync()).Select(x => new ViewModel {
+            Id            = x.Id,
+            MailAddress   = x.MailAddress?.Address ?? "",
+            Anonymized    = x.IsAnonymous,
+            FirstActivity = x.FirstActivity.ToLocalTime()
+        }).OrderByDescending(x => x.Id);
+    }
+
+    private async Task NewItemAsync() {
+        password             = string.Empty;
+        passwordConfirmation = string.Empty;
+        await grid.SetEditingItemAsync(new ViewModel());
+    }
+
+    private async Task DeleteItemAsync(ViewModel item) {
+        if (item.Id is not default(Id))
+            await commandService
+                .TryDeleteAsync(item.Id)
+                .OnSuccessAsync(OnInitializedAsync)
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task AnonymizeItemAsync(ViewModel item) {
+        if (item.Id is not default(Id))
+            await commandService
+                .TryUpdateAsync(item.Id, x => Response.Success(x.AsAnonymized()))
+                .OnSuccessAsync(_ => OnInitializedAsync())
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task CommittedItemChangesAsync(ViewModel item) {
+        if (item.Id is default(Id))
+            await commandService
+                .TryCreateAsync(() => User.TryCreate(item.MailAddress, password))
+                .OnSuccessAsync(_ => OnInitializedAsync())
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private string? ValidateMailAddress(string value) =>
+        (UserMailAddress.TryCreate(value) as IFailure)?.ErrorMessage;
+
+    private string? ValidatePassword(string value) =>
+        (Password.TryCreate(value) as IFailure)?.ErrorMessage;
+
+    private string? ValidatePasswordConfirmation(string value) =>
+        password != value ? "Le mot de passe ne correspond pas !" : null;
+}

@@ -1,0 +1,87 @@
+﻿@using CesiZen.Application.Services
+@using CesiZen.Domain.Aggregates.Content
+@using CesiZen.Domain.Aggregates.Content.ValueObjects
+@using FluentResponse
+@using FluentResponse.Interfaces
+
+@inject IQueryService<Category> queryService
+@inject ICommandService<Category> commandService
+@inject ISnackbar snackbar
+
+<MudDataGrid
+    T="ViewModel"
+    Items="@items"
+    ReadOnly="false" 
+    EditMode="@DataGridEditMode.Cell"
+    CommittedItemChanges="@CommittedItemChangesAsync"
+    Elevation="0"
+    Dense="true"
+    Class="px-4"
+    Style="background-color: var(--mud-palette-background-gray)"
+>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Catégories de contenu</MudText>
+        <MudSpacer />
+        <MudButtonGroup Class="ma-0 pa-0" Color="@Color.Primary" Variant="@Variant.Filled">
+            <MudButton OnClick="NewItemAsync">
+                Ajouter une catégorie
+            </MudButton>
+        </MudButtonGroup>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Title="Titre" Property="x => x.Title"/>
+        <PropertyColumn Title="Nombre de page" Property="x => x.PageCount" Editable="false" CellStyle="width: 20em" />
+        <TemplateColumn>
+            <EditTemplate>
+                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="@Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))" />
+            </EditTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="@ViewModel" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private class ViewModel {
+        public Id?    Id        { get; set; }
+        public string Title     { get; set; }
+        public int    PageCount { get; set; }
+    }
+
+    private List<ViewModel> items = [];
+
+    protected override async Task OnInitializedAsync() {
+        items = (await queryService.GetAllAsync()).Select(x => new ViewModel() {
+            Id        = x.Id,
+            Title     = x.Title.Value,
+            PageCount = x.Pages.Count
+        }).OrderByDescending(x => x.Id).ToList();
+    }
+
+    private async Task NewItemAsync() {
+        await commandService
+            .TryCreateAsync(() => Category.TryCreate("Nouvelle catégorie"))
+            .OnSuccessAsync(_ => OnInitializedAsync())
+            .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task DeleteItemAsync(ViewModel item) {
+        if (item.Id is Id id)
+            await commandService
+                .TryDeleteAsync(id)
+                .OnSuccessAsync(OnInitializedAsync)
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task CommittedItemChangesAsync(ViewModel item) {
+        if (item.Id is Id id)
+            await commandService
+                .TryUpdateAsync(id, x => x.TryWithTitle(item.Title))
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+
+    }
+
+    private string? ValidateTitle(string value) =>
+        (Title.TryCreate(value) as IFailure)?.ErrorMessage;
+}

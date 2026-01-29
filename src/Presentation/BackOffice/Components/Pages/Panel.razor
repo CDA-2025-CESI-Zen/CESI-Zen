@@ -1,0 +1,28 @@
+@page "/panel"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+<PageTitle>Panneau d'administration</PageTitle>
+<MudTabs Elevation="1" Centered SortDirection="SortDirection.None" PanelClass="pa-4 d-flex" MinimumTabWidth="0px">
+    <MudTabPanel Text="Pages" Style="min-width: 70%; margin: 0 auto">
+        <Pages />
+    </MudTabPanel>
+    <MudTabPanel Text="Catégories" Style="min-width: 70%; margin: 0 auto">
+        <Categories />
+    </MudTabPanel>
+    <MudTabPanel Text="Evènements du diagnostic" Style="min-width: 70%; margin: 0 auto">
+        <DiagnosisItems />
+    </MudTabPanel>
+    <MudTabPanel Text="Analyses du diagnostic" Style="min-width: 70%; margin: 0 auto">
+        <DiagnosisAnalyses />
+    </MudTabPanel>
+    <MudTabPanel Text="Utilisateurs" Style="min-width: 70%; margin: 0 auto">
+        <Users />
+    </MudTabPanel>
+    <AuthorizeView Policy="RootOnly">
+        <Authorized>
+            <MudTabPanel Text="Administrateurs" Style="min-width: 70%; margin: 0 auto">
+                <Admins />
+            </MudTabPanel>
+        </Authorized>
+    </AuthorizeView>
+</MudTabs>
