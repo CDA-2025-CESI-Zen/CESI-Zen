@@ -17,7 +17,7 @@ public static partial class Extensions {
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseCors("AllowAll");
-        app.MapControllers();
         app.UseRateLimiter();
+        app.MapControllers();
     }
 }
