@@ -1,8 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using CesiZen.Application.Ports;
 using Microsoft.Extensions.Configuration;
 
-namespace CesiZen.Infrastructure.Services;
+namespace CesiZen.Infrastructure.Adapters;
 public sealed class EncryptionService(string key) : IEncryptionService {
     
     #region PROPERTIES

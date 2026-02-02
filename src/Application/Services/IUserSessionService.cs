@@ -1,6 +1,5 @@
 using CesiZen.Application.Core.ValueObjects;
 using CesiZen.Domain.Aggregates.Accounts;
-using CesiZen.Infrastructure.Core.ValueObjects;
 using FluentResponse.Interfaces;
 
 namespace CesiZen.Application.Services;

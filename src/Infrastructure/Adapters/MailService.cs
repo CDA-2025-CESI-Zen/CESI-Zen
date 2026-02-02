@@ -1,10 +1,11 @@
 using System.Net;
 using System.Net.Mail;
+using CesiZen.Application.Ports;
 using FluentResponse;
 using FluentResponse.Interfaces;
 using Microsoft.Extensions.Configuration;
 
-namespace CesiZen.Infrastructure.Services;
+namespace CesiZen.Infrastructure.Adapters;
 public sealed class MailService(
     string  host,
     ushort  port,

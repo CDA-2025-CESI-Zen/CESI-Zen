@@ -1,4 +1,4 @@
-namespace CesiZen.Infrastructure.Core.Exceptions;
+namespace CesiZen.Application.Core.Exceptions;
 public class EntityConflictException : Exception {
 
     public Type   EntityType { get; }

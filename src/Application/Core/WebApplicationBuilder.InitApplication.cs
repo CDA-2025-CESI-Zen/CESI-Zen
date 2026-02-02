@@ -2,13 +2,13 @@ using Microsoft.Extensions.DependencyInjection;
 using CesiZen.Domain.Aggregates.Content;
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Diagnoses;
-using Microsoft.AspNetCore.Builder;
 using CesiZen.Application.Services;
 using CesiZen.Domain.Aggregates.Core;
 using CesiZen.Domain.Aggregates.Accounts.Events;
 using CesiZen.Application.EventListeners;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Builder;
 
 namespace CesiZen.Application.Core;
 public static partial class Extensions {

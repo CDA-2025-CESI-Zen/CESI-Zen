@@ -3,7 +3,7 @@ using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Content;
 using CesiZen.Domain.Aggregates.Diagnoses;
 using CesiZen.Domain.Aggregates.Core;
-using CesiZen.Infrastructure.Services;
+using CesiZen.Application.Ports;
 
 namespace CesiZen.Infrastructure.Core;
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options) {

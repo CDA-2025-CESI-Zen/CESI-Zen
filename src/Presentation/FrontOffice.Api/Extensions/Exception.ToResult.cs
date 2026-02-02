@@ -1,5 +1,5 @@
 using System.Security;
-using CesiZen.Infrastructure.Core.Exceptions;
+using CesiZen.Application.Core.Exceptions;
 
 namespace CesiZen.Presentation.FrontOffice.Api.Extensions;
 public static partial class Extensions {

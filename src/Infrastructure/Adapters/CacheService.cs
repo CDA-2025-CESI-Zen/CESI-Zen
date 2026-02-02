@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
+using CesiZen.Application.Ports;
 using FluentResponse;
 using FluentResponse.Interfaces;
 
-namespace CesiZen.Infrastructure.Services;
+namespace CesiZen.Infrastructure.Adapters;
 public abstract class CacheService<TKey, TValue> : ICacheService<TKey, TValue>
     where TKey   : notnull
     where TValue : notnull {

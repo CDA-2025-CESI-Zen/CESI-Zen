@@ -4,7 +4,7 @@ using FluentResponse;
 using FluentResponse.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace CesiZen.Infrastructure.Services;
+namespace CesiZen.Infrastructure.Adapters;
 public sealed class PageRepository(
     DbContext              dbContext,
     IDomainEventDispatcher domainEventDispatcher

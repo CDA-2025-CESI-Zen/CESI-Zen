@@ -1,7 +1,8 @@
-using CesiZen.Infrastructure.Core.ValueObjects;
+using CesiZen.Application.Core.ValueObjects;
+using CesiZen.Application.Ports;
 using Microsoft.Extensions.Configuration;
 
-namespace CesiZen.Infrastructure.Services;
+namespace CesiZen.Infrastructure.Adapters;
 public sealed class RegistrationValidationCacheService(
     TimeSpan registrationValidationRequestExpiry
 ) : CacheService<string, Pin>, IRegistrationValidationCacheService {
