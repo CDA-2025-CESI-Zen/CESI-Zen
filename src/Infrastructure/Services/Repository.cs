@@ -28,6 +28,11 @@ public class Repository<T>(
             return await domainEventDispatcher.DispatchAsync(domainEvents).OnSuccessAsync(() => entity);
         }
 
+        protected async Task<IResponse<T>> TryDispatchEventsAsync(T entity) {
+            entity = entity.WithConsumedEvents(out var domainEvents);
+            return await domainEventDispatcher.DispatchAsync(domainEvents).OnSuccessAsync(() => entity);
+        }
+
         public virtual async Task<IResponse<T>> TryAddAsync(T entity) {
 
             // We check that there isn't already an entity with the same primary key.
@@ -37,7 +42,7 @@ public class Repository<T>(
             return await this.TryValidateAsync(entity).OnSuccessAsync(async entity => {
                 await this.table.AddAsync(entity);
                 await this.dbContext.SaveChangesAsync();
-            });
+            }).OnSuccessAsync(TryDispatchEventsAsync);
         }
 
         public virtual Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, T> changes) =>
@@ -50,7 +55,7 @@ public class Repository<T>(
                     await this.dbContext.SaveChangesAsync();
                 
                 })
-            );
+            ).OnSuccessAsync(TryDispatchEventsAsync);
 
         public virtual Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, IResponse<T>> changes) =>
             this.TryGetAsync(id).OnSuccessAsync(oldEntity =>
@@ -62,7 +67,7 @@ public class Repository<T>(
                     await this.dbContext.SaveChangesAsync();
                 
                 })
-            );
+            ).OnSuccessAsync(TryDispatchEventsAsync);
 
         public virtual async Task<IResponse> TryDeleteAsync(T entity) {
             this.table.Remove(entity);
