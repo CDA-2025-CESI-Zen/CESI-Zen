@@ -1,11 +1,6 @@
-using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Accounts.Events;
 using CesiZen.Domain.Aggregates.Core;
-<<<<<<< Updated upstream
 using CesiZen.Infrastructure.Services;
-using FluentResponse;
-=======
->>>>>>> Stashed changes
 using FluentResponse.Interfaces;
 
 namespace CesiZen.Application.EventListeners;
