@@ -104,7 +104,7 @@ public record User : AggregateRoot<User> {
                 MailAddress  = null,
                 Password     = Password.FromNoise(),
                 DomainEvents = this.MailAddress is not null
-                    ? [..this.DomainEvents, new UserAnonymized(this.Id)]
+                    ? [..this.DomainEvents, new UserAnonymized(this.Id, this.MailAddress)]
                     : this.DomainEvents
             };
 
