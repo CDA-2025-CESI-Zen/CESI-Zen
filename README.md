@@ -88,13 +88,6 @@ Clonez d'abord le dépôt en entrant cette commande dans le terminale :
 git clone https://github.com/CDA-2025-CESI-Zen/CESI-Zen.git
 ```
 
-Puis, entrez cette commande dans le terminal :
-
-```shell
-cd CESI-Zen
-dotnet ef database update --project src\\Infrastructure
-```
-
 ### Exécution
 
 Lancez l'**API Front-Office** *(nécessaire pour le fonctionnement du Front-Office mobile)* en entrant cette commande dans le terminale :
@@ -102,6 +95,11 @@ Lancez l'**API Front-Office** *(nécessaire pour le fonctionnement du Front-Offi
 ```shell
 dotnet run --launch-profile https --project src\\Presentation\\FrontOffice.Api
 ```
+
+- Pour initialiser la base de données lors de la première exécution, ajoutez `-- -n`
+- Pour initialiser une base de données de développement, ajoutez `-- -n -d`
+
+(exemple : ``dotnet run --launch-profile https --project src\\Presentation\\FrontOffice.Api -- -n -d``).
 
 Lancez le **Back-Office** en entrant cette commande dans le terminale :
 

@@ -9,6 +9,6 @@ builder.InitApplication();
 builder.InitPresentation();
 
 var app = builder.Build();
-app.FinalizePresentation();
+app.FinalizePresentation(args);
 
 app.Run();
