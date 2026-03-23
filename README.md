@@ -85,7 +85,7 @@ services:
 Clonez d'abord le dépôt en entrant cette commande dans le terminale :
 
 ```shell
-git clone https://github.com/drownedNonsense/CESI-Zen.git
+git clone https://github.com/CDA-2025-CESI-Zen/CESI-Zen.git
 ```
 
 Puis, entrez cette commande dans le terminal :

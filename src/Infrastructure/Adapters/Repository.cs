@@ -24,23 +24,28 @@ public class Repository<T>(
                 if (await entity.RepositoryInvariant(this) is IResponse<T> failure and IFailure)
                     return failure;
 
-            entity = entity.WithConsumedEvents(out var domainEvents);
-            return await domainEventDispatcher.DispatchAsync(domainEvents).OnSuccessAsync(() => entity);
+            return Response.Success(entity);
+
         }
 
         protected async Task<IResponse<T>> TryDispatchEventsAsync(T entity) {
+
+            this.table.Entry(entity).State = EntityState.Detached;
             entity = entity.WithConsumedEvents(out var domainEvents);
-            return await domainEventDispatcher.DispatchAsync(domainEvents).OnSuccessAsync(() => entity);
+
+            return await domainEventDispatcher.DispatchAsync(domainEvents).OnSuccessAsync(() => {
+                this.table.Attach(entity);
+                return entity;
+            });
         }
 
         public virtual async Task<IResponse<T>> TryAddAsync(T entity) {
 
-            // We check that there isn't already an entity with the same primary key.
             if (await this.ContainsIdAsync(entity.Id))
                 return Response.Failure<T>(new EntityConflictException(typeof(T), entity.Id));
             
             return await this.TryValidateAsync(entity).OnSuccessAsync(async entity => {
-                await this.table.AddAsync(entity);
+                entity = (await this.table.AddAsync(entity)).Entity;
                 await this.dbContext.SaveChangesAsync();
             }).OnSuccessAsync(TryDispatchEventsAsync);
         }
