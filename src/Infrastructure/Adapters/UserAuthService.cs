@@ -1,17 +1,20 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CesiZen.Application.Ports;
 using CesiZen.Domain.Aggregates.Accounts;
+using FluentResponse;
+using FluentResponse.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace CesiZen.Infrastructure.Services;
-public sealed class AdminAuthService(
+namespace CesiZen.Infrastructure.Adapters;
+public sealed class UserAuthService(
     TimeSpan authenticationTokenExpiry,
     string   tokenIssuer,
     string   tokenAudience,
     string   encodingKey
-) : IAdminAuthService {
+) : IUserAuthService {
 
     #region PROPERTIES
 
@@ -27,23 +30,26 @@ public sealed class AdminAuthService(
     #endregion
     #region CONSTRUCTORS
 
-        public AdminAuthService(
+        public UserAuthService(
             IConfiguration configuration
         ) : this(
-            authenticationTokenExpiry : TimeSpan.Parse(configuration["Jwt:Expiry:Admin"]!),
+            authenticationTokenExpiry : TimeSpan.Parse(configuration["Jwt:Expiry:User"]!),
             tokenIssuer               : configuration["Jwt:Issuer"]!,
             tokenAudience             : configuration["Jwt:Audience"]!,
-            encodingKey               : configuration["Jwt:Key:Admin"]!
+            encodingKey               : configuration["Jwt:Key:User"]!
         ) {}
 
     #endregion
     #region METHODS
 
-        public string GenerateToken(Admin admin) {
+        public IResponse<string> TryGenerateToken(User user) {
+            if (user.MailAddress is null)
+                return Response.Failure<string>(new InvalidOperationException("Impossible de générer un token pour un compte anonymisé !"));
+
             Claim[] claims = [
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Sub, admin.Id.ToString()),
-                new Claim(ClaimTypes.Email,            admin.MailAddress.Address),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(ClaimTypes.Email,            user.MailAddress.Address),
             ];
 
 
@@ -55,9 +61,9 @@ public sealed class AdminAuthService(
                 signingCredentials : this.credentials
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return Response.Success(new JwtSecurityTokenHandler().WriteToken(token));
         }
 
     #endregion
-
+    
 }

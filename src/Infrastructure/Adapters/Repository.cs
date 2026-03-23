@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using FluentResponse;
 using FluentResponse.Interfaces;
 using CesiZen.Domain.Aggregates.Core;
-using CesiZen.Infrastructure.Core.Exceptions;
+using CesiZen.Application.Core.Exceptions;
 
-namespace CesiZen.Infrastructure.Services;
+namespace CesiZen.Infrastructure.Adapters;
 public class Repository<T>(
     DbContext              dbContext,
     IDomainEventDispatcher domainEventDispatcher

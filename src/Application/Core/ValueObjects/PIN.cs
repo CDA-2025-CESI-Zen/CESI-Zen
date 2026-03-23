@@ -1,4 +1,4 @@
-namespace CesiZen.Infrastructure.Core.ValueObjects;
+namespace CesiZen.Application.Core.ValueObjects;
 public readonly record struct Pin(uint Code) {
     public Pin() : this((uint)new Random().Next(0, 1_0000_0000)) {}
     public static implicit operator uint(Pin from) => from.Code;

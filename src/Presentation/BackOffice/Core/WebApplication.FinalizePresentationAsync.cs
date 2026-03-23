@@ -10,7 +10,7 @@ public static partial class Extensions {
     /// Finalizes all the presentations's services.
     /// </summary>
     /// <param name="self">The app builder.</param>
-    public static async Task FinalizePresentationAsync(this WebApplication app) {
+    public static void FinalizePresentation(this WebApplication app) {
         
         if (!app.Environment.IsDevelopment()) {
             app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -22,9 +22,5 @@ public static partial class Extensions {
         app.MapStaticAssets();
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
-        using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider
-            .GetRequiredService<IRepository<Admin>>()
-            .TryAddAsync(Admin.TryCreate(app.Configuration["Root:MailAddress"]!, app.Configuration["Root:Password"]!).Unwrap());
     }
 }

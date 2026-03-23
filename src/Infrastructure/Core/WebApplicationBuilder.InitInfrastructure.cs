@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using CesiZen.Infrastructure.Services;
 using CesiZen.Domain.Aggregates.Core;
 using CesiZen.Domain.Aggregates.Content;
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Diagnoses;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
+using CesiZen.Application.Ports;
+using CesiZen.Infrastructure.Adapters;
 
 namespace CesiZen.Infrastructure.Core;
 public static partial class Extensions {
