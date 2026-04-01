@@ -65,13 +65,16 @@ services:
       dockerfile: src/Presentation/FrontOffice.Api/Dockerfile
     networks:
       - cesizen
+    env_file:
+      - .env
     ports:
-      - <Port de l'API Front Office>:443
+      - <Port HTTPS de l'API Front Office>:<Port HTTPS de l'API Front Office>
+      - <Port HTTP de l'API Front Office>:<Port HTTP de l'API Front Office>
     env_file:
       - .env
     environment:
-      ASPNETCORE_URLS: "https://+;http://+"
-      ASPNETCORE_HTTPS_PORTS: "443"
+      ASPNETCORE_HTTPS_PORTS: <Port HTTPS de l'API Front Office>
+      ASPNETCORE_HTTP_PORTS: <Port HTTP de l'API Front Office>
     volumes:
       - ${USERPROFILE}/.aspnet/https:/https
       - ~/.vsdbg:/remote_debugger:rw
@@ -85,12 +88,13 @@ services:
     networks:
       - cesizen
     ports:
-      - <Port de l'interface Back Office>:443
+      - <Port HTTPS de l'interface Back Office>:<Port HTTPS de l'interface Back Office>
+      - <Port HTTP de l'interface Back Office>:<Port HTTP de l'interface Back Office>
     env_file:
       - .env
     environment:
-      ASPNETCORE_URLS: "https://+;http://+"
-      ASPNETCORE_HTTPS_PORTS: "443"
+      ASPNETCORE_HTTPS_PORTS: <Port HTTPS de l'interface Back Office>
+      ASPNETCORE_HTTP_PORTS: <Port HTTP de l'interface Back Office>
     volumes:
       - ${USERPROFILE}/.aspnet/https:/https
       - ~/.vsdbg:/remote_debugger:rw
@@ -125,6 +129,10 @@ Si vous souhaitez démarrer la solution en environnement de production, entrez c
 ```shell
 docker-compose -f docker-compose.yml up -d --build
 ```
+
+L'API sera accessible sur `http://localhost:<Port HTTP de l'API Front Office>` et automatiquement redirigée vers `https://localhost:<Port HTTPS de l'API Front Office>`.
+
+L'interface administrateur sera accessible sur `http://localhost:<Port HTTP de l'interface Back Office>` et automatiquement redirigée vers `https://localhost:<Port HTTPS de l'interface Back Office>`.
 
 ### Hébergement local
 Si vous souhaitez démarrer la solution localement, entrez cette commande après avoir initialisé les variables d'environnement :
