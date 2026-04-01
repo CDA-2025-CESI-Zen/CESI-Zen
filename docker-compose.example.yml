@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:14.22
+    restart: always
+    shm_size: 128mb
+    networks:
+      - cesizen
+    environment:
+      POSTGRES_PASSWORD: ${DB__Password}
+      POSTGRES_USER: ${DB__Username}
+      POSTGRES_DB: ${DB__Database}
+    volumes:
+      - cesizen-db:/var/lib/postgresql/data/
+
+  cesizen-front-office-api:
+    build:
+      context: .
+      dockerfile: src/Presentation/FrontOffice.Api/Dockerfile
+    networks:
+      - cesizen
+    ports:
+      - 8443:8443
+      - 8080:8080
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_HTTPS_PORTS: "8443"
+      ASPNETCORE_HTTP_PORTS: "8080"
+    command: ["-i", "-d"]
+    volumes:
+      - ${USERPROFILE}/.aspnet/https:/https
+      - ~/.vsdbg:/remote_debugger:rw
+    depends_on:
+      - db
+
+  cesizen-back-office:
+    build:
+      context: .
+      dockerfile: src/Presentation/BackOffice/Dockerfile
+    networks:
+      - cesizen
+    ports:
+      - 443:443
+      - 80:80
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_HTTPS_PORTS: "443"
+      ASPNETCORE_HTTP_PORTS: "80"
+    volumes:
+      - ${USERPROFILE}/.aspnet/https:/https
+      - ~/.vsdbg:/remote_debugger:rw
+    depends_on:
+      - db
+
+networks:
+  cesizen:
+
+volumes:
+  cesizen-db:

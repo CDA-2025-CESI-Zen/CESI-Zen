@@ -21,10 +21,13 @@ public static partial class Extensions {
         app.MapControllers();
 
         if (args.Any(a =>
-            string.Equals(a, "new-db", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(a, "-n", StringComparison.OrdinalIgnoreCase))
-        ) app.InitDb(args.Any(a =>
-            string.Equals(a, "dev-db", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(a, "--init-db", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(a, "-i", StringComparison.OrdinalIgnoreCase))
+        ) app.InitDb(forceInit: args.Any(a =>
+            string.Equals(a, "--force-init", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(a, "-f", StringComparison.OrdinalIgnoreCase)
+        ), dev: args.Any(a =>
+            string.Equals(a, "--dev", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(a, "-d", StringComparison.OrdinalIgnoreCase))
         );
     }

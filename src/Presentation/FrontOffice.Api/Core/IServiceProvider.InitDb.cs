@@ -78,24 +78,26 @@ public static partial class Extensions {
     /// Initializes the database.
     /// </summary>
     /// <param name="self">The app builder.</param>
-    public static void InitDb(this WebApplication app, bool testDb) {
+    public static void InitDb(this WebApplication app, bool forceInit, bool dev) {
 
         using var scope = app.Services.CreateScope();
         app.Logger.LogInformation("Database initialization started...");
 
         var dbContext = scope.ServiceProvider.GetRequiredService<DbContext>();
-        dbContext.Database.EnsureDeleted();
-        dbContext.Database.EnsureCreated();
-        
-        dbContext.Add(Admin.TryCreate(app.Configuration["Root:MailAddress"]!, app.Configuration["Root:Password"]!).Unwrap());
-        dbContext.SaveChanges();
-        dbContext.InitDiagnosisItems();
-        dbContext.InitDiagnosisAnalyses();
-        dbContext.InitCategories();
 
-        if (testDb) {
-            dbContext.InitUsers();
-            dbContext.InitPages();
+        if (forceInit) dbContext.Database.EnsureDeleted();
+        if (dbContext.Database.EnsureCreated() || forceInit) {
+        
+            dbContext.Add(Admin.TryCreate(app.Configuration["Root:MailAddress"]!, app.Configuration["Root:Password"]!).Unwrap());
+            dbContext.SaveChanges();
+            dbContext.InitDiagnosisItems();
+            dbContext.InitDiagnosisAnalyses();
+            dbContext.InitCategories();
+
+            if (dev) {
+                dbContext.InitUsers();
+                dbContext.InitPages();
+            }
         }
 
         app.Logger.LogInformation("Database initialization completed!");
