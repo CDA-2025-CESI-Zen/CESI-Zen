@@ -42,72 +42,7 @@ Logging__LogLevel__Microsoft.EntityFrameworkCore = "Warning"
 ### Hébergement Docker
 #### Configuration
 
-Configurez votre `docker-compose.yml` en remplaçant les données entre `<...>` par celle désirées (un exemple est donné avec `docker-compose.example.yml` et `docker-compose.dev.example.yml`) :
-
-```yml
-services:
-  db:
-    image: postgres
-    restart: always
-    shm_size: 128mb
-    networks:
-      - cesizen
-    environment:
-      POSTGRES_PASSWORD: ${DB__Password}
-      POSTGRES_USER: ${DB__Username}
-      POSTGRES_DB: ${DB__Database}
-    volumes:
-      - cesizen-db:/var/lib/postgresql/data/
-
-  cesizen-front-office-api:
-    build:
-      context: .
-      dockerfile: src/Presentation/FrontOffice.Api/Dockerfile
-    networks:
-      - cesizen
-    env_file:
-      - .env
-    ports:
-      - <Port HTTPS de l'API Front Office>:<Port HTTPS de l'API Front Office>
-      - <Port HTTP de l'API Front Office>:<Port HTTP de l'API Front Office>
-    env_file:
-      - .env
-    environment:
-      ASPNETCORE_HTTPS_PORTS: <Port HTTPS de l'API Front Office>
-      ASPNETCORE_HTTP_PORTS: <Port HTTP de l'API Front Office>
-    volumes:
-      - ${USERPROFILE}/.aspnet/https:/https
-      - ~/.vsdbg:/remote_debugger:rw
-    depends_on:
-      - db
-
-  cesizen-back-office:
-    build:
-      context: .
-      dockerfile: src/Presentation/BackOffice/Dockerfile
-    networks:
-      - cesizen
-    ports:
-      - <Port HTTPS de l'interface Back Office>:<Port HTTPS de l'interface Back Office>
-      - <Port HTTP de l'interface Back Office>:<Port HTTP de l'interface Back Office>
-    env_file:
-      - .env
-    environment:
-      ASPNETCORE_HTTPS_PORTS: <Port HTTPS de l'interface Back Office>
-      ASPNETCORE_HTTP_PORTS: <Port HTTP de l'interface Back Office>
-    volumes:
-      - ${USERPROFILE}/.aspnet/https:/https
-      - ~/.vsdbg:/remote_debugger:rw
-    depends_on:
-      - db
-
-networks:
-  cesizen:
-
-volumes:
-  cesizen-db:
-```
-
+Configurez votre `docker-compose.yml` (un exemple est donné avec `docker-compose.example.yml` et `docker-compose.dev.example.yml`).
 Puis, assurez vous que le dossier `%USERPROFILE%/.aspnet/https/` existe avant d'entrez cette commande dans le terminal powershell en remplaçant `ASPNETCORE_Kestrel__Certificates__Default__Password` par la valeur configurée dans le `.env` :
 
 ```shell
@@ -121,18 +56,18 @@ dotnet dev-certs https -ep $env:USERPROFILE\.aspnet\https\aspnetapp.pfx -p <ASPN
 Si vous souhaitez démarrer la solution en environnement de developpement, entrez cette commande :
 
 ```shell
-docker-compose -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 Si vous souhaitez démarrer la solution en environnement de production, entrez cette commande :
 
 ```shell
-docker-compose -f docker-compose.yml up -d --build
+docker compose -f docker-compose.yml up -d --build
 ```
 
-L'API sera accessible sur `http://localhost:<Port HTTP de l'API Front Office>` et automatiquement redirigée vers `https://localhost:<Port HTTPS de l'API Front Office>`.
+L'interface administrateur sera accessible sur `http://localhost` et automatiquement redirigée vers `https://localhost`.
+L'API sera accessible sur `http://localhost:8080` et automatiquement redirigée vers `https://localhost:8443`.
 
-L'interface administrateur sera accessible sur `http://localhost:<Port HTTP de l'interface Back Office>` et automatiquement redirigée vers `https://localhost:<Port HTTPS de l'interface Back Office>`.
 
 ### Hébergement local
 Si vous souhaitez démarrer la solution localement, entrez cette commande après avoir initialisé les variables d'environnement :
@@ -144,7 +79,7 @@ dotnet run --launch-profile https --project src\\Presentation\\BackOffice
 Puis, entrez :
 
 ```shell
-dotnet run --launch-profile https --project src\\Presentation\\FrontOffice.Api
+dotnet run --launch-profile https --project src\\Presentation\\FrontOffice.Api --
 ```
 
 \* Si vous souhaitez initialiser la base de données, ajoutez `-i` ou `--init-db`.
