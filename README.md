@@ -1,86 +1,4 @@
-### Configuration
-
-Vous pouvez configurer la solution à l'aide du fichier `appsettings.shared.json` *(ou `appsettings.shared.Developement.json` pour la version de développement)* :
-
-```json
-{
-  "AllowedHosts": "*",
-
-  "Root": {
-    "MailAddress" : <Adresse électronique de l'administrateur racine>,
-    "Password"    : <Mot de passe de l'administrateur racine>
-  },
-  
-  "DB" : {
-    "Host"          : <Adresse de la base de données PostgreSQL>,
-    "Port"          : <Port de la base de données PostgreSQL>,
-    "Database"      : <Nom de la base de données PostgreSQL>,
-    "Username"      : <Utilisateur de la base de données PostgreSQL>,
-    "Password"      : <Mot de passe de la base de données PostgreSQL>,
-    "EncryptionKey" : <Clé de chiffrement 128bit pour la base de données>
-  },
-
-  "Jwt" : {
-    "Key" : {
-      "Admin" : <Clé de chiffrement 512bit pour l'authentification administrateur>,
-      "User"  : <Clé de chiffrement 512bit pour l'authentification utilisateur>
-    },
-    "Issuer"   : "cesizen.fr",
-    "Audience" : "cesizen.fr",
-    "Expiry"   : {
-      "Admin" : <Durée de l'authentification administrateur (hh:mm)>,
-      "User"  : <Durée de l'authentification utilisateur (hh:mm)>,
-    }
-  },
-
-  "Pin" : {
-    "RegistrationValidationRequestExpiry" : <Durée des codes PIN de création de compte utilisateur (hh:mm)>,
-    "PasswordResetRequestExpiry"          : <Durée des codes PIN de réinistialisation de mot de passe utilisateur (hh:mm)>
-  },
-
-  "Smtp" : {
-    "Host"        : <Adresse du service d'envoi de courrier électronique>,
-    "Port"        : <Port du service d'envoi de courrier électronique>,
-    "SenderEmail" : "noreply@cesizen.fr"
-  },
-  
-  "Logging" : {
-    "LogLevel" : {
-      "Default" : "Information",
-      "Microsoft.EntityFrameworkCore" : "Warning"
-    }
-  }
-}
-```
-
-Il est possible de configurer la solution à l'aide de variables d'environnement : dans ce cas, nommez vos variables avec le format ``<Nom du parent>__<Nom de l'enfant>__<...>``. (exemple : ``Root__MailAddress=root@cesizen.fr``).
-
-### Initialisation
-
-Si aucune base de données et service d'envoi de courrier électronique ne sont en place, vous pouvez les mettre en place à l'aide de ce docker-compose :
-
-```yml
-services:
-
-  db:
-    image: postgres
-    restart: always
-    shm_size: 128mb
-    ports:
-      - <DB__Port>:5432
-    environment:
-      POSTGRES_PASSWORD: <DB__Password>
-      POSTGRES_USER: <DB__Username>
-      POSTGRES_DB: <DB__Database>
-
-  smtp:
-    image: maildev/maildev
-    environment:
-      MAILDEV_SMTP_PORT: 1026
-    ports:
-      - "3000:1080"         # Interface web
-      - "<Smtp__Port>:1026" # SMTP
-```
+### Initialiser le projet
 
 Clonez d'abord le dépôt en entrant cette commande dans le terminale :
 
@@ -88,21 +6,139 @@ Clonez d'abord le dépôt en entrant cette commande dans le terminale :
 git clone https://github.com/CDA-2025-CESI-Zen/CESI-Zen.git
 ```
 
-### Exécution
+### Configurer la solution
 
-Lancez l'**API Front-Office** *(nécessaire pour le fonctionnement du Front-Office mobile)* en entrant cette commande dans le terminale :
+Vous pouvez configurer la solution à l'aide du fichier `.env` (un exemple est donné avec `.env.example`) :
+
+```env
+Root__MailAddress = <Adresse électronique de l'administrateur racine>
+Root__Password    = <Mot de passe de l'administrateur racine>
+
+DB__Host          = <Adresse de la base de données PostgreSQL>
+DB__Port          = <Port de la base de données PostgreSQL>
+DB__Database      = <Nom de la base de données PostgreSQL>
+DB__Username      = <Utilisateur de la base de données PostgreSQL>
+DB__Password      = <Mot de passe de la base de données PostgreSQL>
+DB__EncryptionKey = <Clé de chiffrement 128bit pour la base de données>
+
+Jwt__Key__Admin      = <Clé de chiffrement 512bit pour l'authentification administrateur>
+Jwt__Key__User       = <Clé de chiffrement 512bit pour l'authentification utilisateur>
+Jwt__Issuer          = "resr.fr"
+Jwt__Audience        = "resr.fr"
+Jwt__Expiry__Admin = <Durée de l'authentification administrateur (hh:mm)>
+Jwt__Expiry__User  = <Durée de l'authentification utilisateur (hh:mm)>
+
+Pin__RegistrationValidationRequestExpiry = <Durée des codes PIN de création de compte utilisateur (hh:mm)>
+Pin__PasswordResetRequestExpiry          = <Durée des codes PIN de réinistialisation de mot de passe utilisateur (hh:mm)>
+
+Smtp__Host        = <Adresse du service d'envoi de courrier électronique>
+Smtp__Port        = <Port du service d'envoi de courrier électronique>
+Smtp__SenderEmail = "noreply@cesizen.fr"
+  
+Logging__LogLevel__Default                       = "Information"
+Logging__LogLevel__Microsoft.EntityFrameworkCore = "Warning"
+```
+
+### Hébergement Docker
+#### Configuration
+
+Configurez votre `docker-compose.yml` en remplaçant les données entre `<...>` par celle désirées (un exemple est donné avec `docker-compose.example.yml` et `docker-compose.dev.example.yml`) :
+
+```yml
+services:
+  db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    networks:
+      - cesizen
+    environment:
+      POSTGRES_PASSWORD: ${DB__Password}
+      POSTGRES_USER: ${DB__Username}
+      POSTGRES_DB: ${DB__Database}
+    volumes:
+      - cesizen-db:/var/lib/postgresql/data/
+
+  cesizen-front-office-api:
+    build:
+      context: .
+      dockerfile: src/Presentation/FrontOffice.Api/Dockerfile
+    networks:
+      - cesizen
+    ports:
+      - <Port de l'API Front Office>:443
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORTS: "443"
+    volumes:
+      - ${USERPROFILE}/.aspnet/https:/https
+      - ~/.vsdbg:/remote_debugger:rw
+    depends_on:
+      - db
+
+  cesizen-back-office:
+    build:
+      context: .
+      dockerfile: src/Presentation/BackOffice/Dockerfile
+    networks:
+      - cesizen
+    ports:
+      - <Port de l'interface Back Office>:443
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORTS: "443"
+    volumes:
+      - ${USERPROFILE}/.aspnet/https:/https
+      - ~/.vsdbg:/remote_debugger:rw
+    depends_on:
+      - db
+
+networks:
+  cesizen:
+
+volumes:
+  cesizen-db:
+```
+
+Puis, assurez vous que le dossier `%USERPROFILE%/.aspnet/https/` existe avant d'entrez cette commande dans le terminal powershell en remplaçant `ASPNETCORE_Kestrel__Certificates__Default__Password` par la valeur configurée dans le `.env` :
+
+```shell
+dotnet dev-certs https -ep $env:USERPROFILE\.aspnet\https\aspnetapp.pfx -p <ASPNETCORE_Kestrel__Certificates__Default__Password> --trust
+```
+
+\* Si vous êtes sur MacOS, remplacez la variable d'environnement `USERPROFILE` par `HOME`.
+
+##### Exécution
+
+Si vous souhaitez démarrer la solution en environnement de developpement, entrez cette commande :
+
+```shell
+docker-compose -f docker-compose.dev.yml up -d --build
+```
+
+Si vous souhaitez démarrer la solution en environnement de production, entrez cette commande :
+
+```shell
+docker-compose -f docker-compose.yml up -d --build
+```
+
+### Hébergement local
+Si vous souhaitez démarrer la solution localement, entrez cette commande après avoir initialisé les variables d'environnement :
+
+```shell
+dotnet run --launch-profile https --project src\\Presentation\\BackOffice
+```
+
+Puis, entrez :
 
 ```shell
 dotnet run --launch-profile https --project src\\Presentation\\FrontOffice.Api
 ```
 
-- Pour initialiser la base de données lors de la première exécution, ajoutez `-- -n`
-- Pour initialiser une base de données de développement, ajoutez `-- -n -d`
-
-(exemple : ``dotnet run --launch-profile https --project src\\Presentation\\FrontOffice.Api -- -n -d``).
-
-Lancez le **Back-Office** en entrant cette commande dans le terminale :
-
-```shell
-dotnet run --launch-profile https --project src\\Presentation\\BackOffice
-```
+\* Si vous souhaitez initialiser la base de données, ajoutez `-i` ou `--init-db`.
+\* Si vous souhaitez indiquer la base de données avec des données de test, ajoutez aussi `-d` ou `--dev`.
+\* Si vous souhaitez forcer cette action en réinitialisant la base de données, ajoutez aussi `-f` ou `--force-init`.
