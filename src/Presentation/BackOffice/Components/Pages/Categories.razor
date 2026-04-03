@@ -1,12 +1,14 @@
 ﻿@using CesiZen.Application.Services
 @using CesiZen.Domain.Aggregates.Content
 @using CesiZen.Domain.Aggregates.Content.ValueObjects
+@using CesiZen.Presentation.BackOffice.Components.Dialogs
 @using FluentResponse
 @using FluentResponse.Interfaces
 
 @inject IQueryService<Category> queryService
 @inject ICommandService<Category> commandService
 @inject ISnackbar snackbar
+@inject IDialogService DialogService
 
 <MudDataGrid
     T="ViewModel"
@@ -67,6 +69,25 @@
     }
 
     private async Task DeleteItemAsync(ViewModel item) {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DeletionDialog>(
+            "Suppression de la catégorie",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (result?.Canceled == true)
+            return;
+
         if (item.Id is Id id)
             await commandService
                 .TryDeleteAsync(id)

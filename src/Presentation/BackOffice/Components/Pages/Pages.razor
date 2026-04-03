@@ -1,6 +1,7 @@
 ﻿@using CesiZen.Application.Services
 @using CesiZen.Domain.Aggregates.Content
 @using CesiZen.Domain.Aggregates.Content.ValueObjects
+@using CesiZen.Presentation.BackOffice.Components.Dialogs
 @using FluentResponse
 @using FluentResponse.Interfaces
 
@@ -10,6 +11,7 @@
 @inject IQueryService<ContentPage> queryService
 @inject ICommandService<ContentPage> commandService
 @inject ISnackbar snackbar
+@inject IDialogService DialogService
 
 <MudDataGrid
     @ref="@grid"
@@ -112,6 +114,26 @@
     }
 
     private async Task DeleteItemAsync(ViewModel item) {
+        
+        var parameters = new DialogParameters();
+        var options = new DialogOptions {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DeletionDialog>(
+            "Suppression de la page",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (result?.Canceled == true)
+            return;
+
         await grid.CancelEditingItemAsync();
         if (item.Id is not default(Id))
             await commandService

@@ -2,6 +2,7 @@
 @using CesiZen.Domain.Aggregates.Accounts
 @using CesiZen.Domain.Aggregates.Accounts.ValueObjects
 @using CesiZen.Presentation.BackOffice.Core
+@using CesiZen.Presentation.BackOffice.Components.Dialogs
 @using FluentResponse
 @using FluentResponse.Interfaces
 @using System.Security.Claims
@@ -10,6 +11,7 @@
 @inject ICommandService<Admin> commandService
 @inject ISnackbar snackbar
 @inject IConfiguration configuration
+@inject IDialogService DialogService
 
 <MudDataGrid
     @ref="@grid"
@@ -87,6 +89,26 @@
     }
 
     private async Task DeleteItemAsync(ViewModel item) {
+
+        var parameters = new DialogParameters();
+        var options = new DialogOptions {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DeletionDialog>(
+            "Suppression de l'administrateur",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (result?.Canceled == true)
+            return;
+
         if (item.Id is not default(Id))
             await commandService
                 .TryDeleteAsync(item.Id)

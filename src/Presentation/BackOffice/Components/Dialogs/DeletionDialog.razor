@@ -1,0 +1,28 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1">
+            Êtes vous sûr de vouloirs supprimer cet élément ?
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Error">
+            Cette action est définitive.
+        </MudText>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">
+            Annuler
+        </MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Confirm">
+            Supprimer
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Cancel();
+}
