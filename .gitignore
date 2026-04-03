@@ -289,3 +289,5 @@ __pycache__/
 *.xsd.cs
 appsettings.shared.json
 docker-compose.yml
+appsettings.shared.Development.json
+appsettings.shared.json

@@ -16,32 +16,37 @@
 @rendermode InteractiveServer
 
 <PageTitle>Se connecter à CESI Zen</PageTitle>
-<MudContainer MaxWidth="MaxWidth.Small" Class="pa-10">
-    <EditForm FormName="Login" Model="@model" OnValidSubmit="OnValidSubmit">
-        <DataAnnotationsValidator/>
-        <MudCard Elevation="0" Class="py-10 px-20" Style="background-color: var(--mud-palette-background-gray)">
-            <MudText Typo="Typo.h6" GutterBottom="true"><b>Connexion au panneau d'administration de CESI Zen</b></MudText>
-            <br/>
-            <MudCardContent>
-                <MudTextField
-                    Label="Identifiant"
-                    HelperText="Format attendu : nom@cesizen.fr"
-                    @bind-Value="model.MailAddress"
-                    For="@(() => model.MailAddress)"
-                    Validation="@((string value) => ValidateMailAddress(value))"
-                    InputType="@InputType.Email"
-                />
-                <MudTextField
-                    Label="Mot de passe"
-                    @bind-Value="model.Password"
-                    For="@(() => model.Password)"
-                    InputType="InputType.Password"
-                />
-            </MudCardContent>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Se connecter</MudButton>
-        </MudCard>
-    </EditForm>
-</MudContainer>
+<HeadContent>
+    <meta name="description" content="Page de connexion au panneau d'administration">
+</HeadContent>
+<main>
+    <MudContainer MaxWidth="MaxWidth.Small" Class="pa-10">
+        <EditForm FormName="Login" Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator/>
+            <MudCard Elevation="0" Class="py-10 px-20" Style="background-color: var(--mud-palette-background-gray)">
+                <MudText Typo="Typo.h6" GutterBottom="true"><b>Connexion au panneau d'administration de CESI Zen</b></MudText>
+                <br/>
+                <MudCardContent>
+                    <MudTextField
+                        Label="Identifiant"
+                        HelperText="Format attendu : nom@cesizen.fr"
+                        @bind-Value="model.MailAddress"
+                        For="@(() => model.MailAddress)"
+                        Validation="@((string value) => ValidateMailAddress(value))"
+                        InputType="@InputType.Email"
+                    />
+                    <MudTextField
+                        Label="Mot de passe"
+                        @bind-Value="model.Password"
+                        For="@(() => model.Password)"
+                        InputType="InputType.Password"
+                    />
+                </MudCardContent>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Se connecter</MudButton>
+            </MudCard>
+        </EditForm>
+    </MudContainer>
+</main>
 
 @code {
     ViewModel model = new ViewModel();
