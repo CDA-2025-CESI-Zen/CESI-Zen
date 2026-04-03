@@ -30,11 +30,9 @@ public class Repository<T>(
 
         protected async Task<IResponse<T>> TryDispatchEventsAsync(T entity) {
 
-            this.table.Entry(entity).State = EntityState.Detached;
             entity = entity.WithConsumedEvents(out var domainEvents);
 
             return await domainEventDispatcher.DispatchAsync(domainEvents).OnSuccessAsync(() => {
-                this.table.Attach(entity);
                 return entity;
             });
         }
@@ -58,6 +56,7 @@ public class Repository<T>(
                     this.table.Attach(entity);
                     this.table.Entry(entity).State = EntityState.Modified;
                     await this.dbContext.SaveChangesAsync();
+                    this.table.Entry(oldEntity).State = EntityState.Detached;
                 
                 })
             ).OnSuccessAsync(TryDispatchEventsAsync);
@@ -70,6 +69,7 @@ public class Repository<T>(
                     this.table.Attach(entity);
                     this.table.Entry(entity).State = EntityState.Modified;
                     await this.dbContext.SaveChangesAsync();
+                    this.table.Entry(oldEntity).State = EntityState.Detached;
                 
                 })
             ).OnSuccessAsync(TryDispatchEventsAsync);
