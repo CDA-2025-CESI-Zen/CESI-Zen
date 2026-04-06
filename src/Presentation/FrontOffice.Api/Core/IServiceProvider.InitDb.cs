@@ -83,7 +83,7 @@ public static partial class Extensions {
         using (var scope = app.Services.CreateScope()) {
             app.Logger.LogInformation("Database initialization started...");
 
-            var dbContext = scope.ServiceProvider.GetRequiredService<DbContext>();
+            using var dbContext = scope.ServiceProvider.GetRequiredService<DbContext>();
 
             if (forceInit) dbContext.Database.EnsureDeleted();
             if (dbContext.Database.EnsureCreated() || forceInit) {
