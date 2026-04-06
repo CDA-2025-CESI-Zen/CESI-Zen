@@ -1,12 +1,14 @@
 ﻿@using CesiZen.Application.Services
 @using CesiZen.Domain.Aggregates.Accounts
 @using CesiZen.Domain.Aggregates.Accounts.ValueObjects
+@using CesiZen.Presentation.BackOffice.Components.Dialogs
 @using FluentResponse
 @using FluentResponse.Interfaces
 
 @inject IQueryService<User> queryService
 @inject ICommandService<User> commandService
 @inject ISnackbar snackbar
+@inject IDialogService DialogService
 
 <MudDataGrid
     @ref="@grid"
@@ -93,6 +95,26 @@
     }
 
     private async Task DeleteItemAsync(ViewModel item) {
+
+        var parameters = new DialogParameters();
+        var options = new DialogOptions {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DeletionDialog>(
+            "Suppression de l'utilisateur",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (result?.Canceled == true)
+            return;
+
         if (item.Id is not default(Id))
             await commandService
                 .TryDeleteAsync(item.Id)
@@ -101,6 +123,26 @@
     }
 
     private async Task AnonymizeItemAsync(ViewModel item) {
+
+        var parameters = new DialogParameters();
+        var options = new DialogOptions {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<AnonymizationDialog>(
+            "Anonymisation de l'utilisateur",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (result?.Canceled == true)
+            return;
+
         if (item.Id is not default(Id))
             await commandService
                 .TryUpdateAsync(item.Id, x => Response.Success(x.AsAnonymized()))

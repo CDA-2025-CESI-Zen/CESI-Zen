@@ -1,5 +1,6 @@
 ﻿@using CesiZen.Application.Services
 @using CesiZen.Domain.Aggregates.Diagnoses
+@using CesiZen.Presentation.BackOffice.Components.Dialogs
 @using FluentResponse
 @using FluentResponse.Interfaces
 
@@ -9,6 +10,7 @@
 @inject IQueryService<DiagnosisAnalysis> queryService
 @inject ICommandService<DiagnosisAnalysis> commandService
 @inject ISnackbar snackbar
+@inject IDialogService DialogService
 
 <MudDataGrid
     @ref="@grid"
@@ -85,6 +87,26 @@
     }
 
     private async Task DeleteItemAsync(ViewModel item) {
+
+        var parameters = new DialogParameters();
+        var options = new DialogOptions {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DeletionDialog>(
+            "Suppression de l'analyse de diagnostic",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (result?.Canceled == true)
+            return;
+
         await grid.CancelEditingItemAsync();
         if (item.Id is not default(Id))
             await commandService

@@ -1,0 +1,51 @@
+﻿@page "/{*route:nonfile}"
+@using System.Diagnostics
+@using MudBlazor
+
+<PageTitle>Page non trouvée</PageTitle>
+<HeadContent>
+    <meta name="description" content="Cette page n'existe pas.">
+</HeadContent>
+
+<main>
+    <MudContainer MaxWidth="MaxWidth.False" Class="py-12">
+        <MudGrid Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="6">
+            <MudItem xs="12" md="5">
+                <MudText Typo="Typo.h3">Page non trouvée</MudText>
+
+                <MudText Typo="Typo.body2" Class="mt-2 mb-4">
+                    Erreur 404
+                </MudText>
+
+                <MudText Typo="Typo.h6" Class="mb-4">
+                    La page que vous cherchez est introuvable. Excusez-nous pour la gène occasionnée.
+                </MudText>
+
+                <MudText Typo="Typo.body2" Class="mb-6">
+                    Si vous avez tapé l'adresse web dans le navigateur, vérifiez qu'elle est correcte. La page n’est peut-être plus disponible.
+                    <br />
+                    Dans ce cas, pour continuer votre visite vous pouvez consulter notre page d’accueil, ou effectuer une recherche avec notre moteur de recherche en haut de page.
+                    <br />
+                    Sinon contactez-nous pour que l’on puisse vous rediriger vers la bonne information.
+                </MudText>
+
+                <MudButton Href="/" Variant="Variant.Filled" Color="Color.Primary">
+                    Page d'accueil
+                </MudButton>
+            </MudItem>
+
+            <MudItem xs="12" md="3">
+                <MudImage Src="/images/technical-error.svg"
+                    Alt="Illustration d'erreur"
+                    Width="200"
+                    Class="mx-auto"
+                />
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+</main>
+
+@code {
+  [Parameter]
+  public string? Route { get; set; }
+}

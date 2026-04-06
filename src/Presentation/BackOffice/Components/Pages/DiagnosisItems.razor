@@ -1,12 +1,14 @@
 ﻿@using CesiZen.Application.Services
 @using CesiZen.Domain.Aggregates.Diagnoses
 @using CesiZen.Domain.Aggregates.Diagnoses.ValueObjects
+@using CesiZen.Presentation.BackOffice.Components.Dialogs
 @using FluentResponse
 @using FluentResponse.Interfaces
 
 @inject IQueryService<DiagnosisItem> queryService
 @inject ICommandService<DiagnosisItem> commandService
 @inject ISnackbar snackbar
+@inject IDialogService DialogService
 
 <MudDataGrid
     T="ViewModel"
@@ -67,6 +69,26 @@
     }
 
     private async Task DeleteItemAsync(ViewModel item) {
+
+        var parameters = new DialogParameters();
+        var options = new DialogOptions {
+            CloseButton = true,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DeletionDialog>(
+            "Suppression de l'évènement de diagnostic",
+            parameters,
+            options
+        );
+
+        var result = await dialog.Result;
+
+        if (result?.Canceled == true)
+            return;
+
         if (item.Id is Id id)
             await commandService
                 .TryDeleteAsync(id)
