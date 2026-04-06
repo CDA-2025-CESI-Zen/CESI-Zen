@@ -80,23 +80,24 @@ public static partial class Extensions {
     /// <param name="self">The app builder.</param>
     public static void InitDb(this WebApplication app, bool forceInit, bool dev) {
 
-        using var scope = app.Services.CreateScope();
-        app.Logger.LogInformation("Database initialization started...");
+        using (var scope = app.Services.CreateScope()) {
+            app.Logger.LogInformation("Database initialization started...");
 
-        var dbContext = scope.ServiceProvider.GetRequiredService<DbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DbContext>();
 
-        if (forceInit) dbContext.Database.EnsureDeleted();
-        if (dbContext.Database.EnsureCreated() || forceInit) {
-        
-            dbContext.Add(Admin.TryCreate(app.Configuration["Root:MailAddress"]!, app.Configuration["Root:Password"]!).Unwrap());
-            dbContext.SaveChanges();
-            dbContext.InitDiagnosisItems();
-            dbContext.InitDiagnosisAnalyses();
-            dbContext.InitCategories();
+            if (forceInit) dbContext.Database.EnsureDeleted();
+            if (dbContext.Database.EnsureCreated() || forceInit) {
+            
+                dbContext.Add(Admin.TryCreate(app.Configuration["Root:MailAddress"]!, app.Configuration["Root:Password"]!).Unwrap());
+                dbContext.SaveChanges();
+                dbContext.InitDiagnosisItems();
+                dbContext.InitDiagnosisAnalyses();
+                dbContext.InitCategories();
 
-            if (dev) {
-                dbContext.InitUsers();
-                dbContext.InitPages();
+                if (dev) {
+                    dbContext.InitUsers();
+                    dbContext.InitPages();
+                }
             }
         }
 
