@@ -4,8 +4,10 @@ on:
   pull_request:
     branches:
       - master
-    paths:
-      - 'release/*'
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: read
@@ -19,7 +21,7 @@ jobs:
   tests:
     name: Run release candidate tests
     runs-on: ubuntu-latest
-    if: always()
+    if: startsWith(github.head_ref, 'release/')
 
     outputs:
       branch_tag: ${{ steps.tag.outputs.tag }}
