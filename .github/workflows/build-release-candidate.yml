@@ -17,7 +17,7 @@ env:
 
 jobs:
   tests:
-    name: Tests
+    name: Run release candidate tests
     runs-on: ubuntu-latest
     if: always()
 
@@ -83,7 +83,7 @@ jobs:
             done
 
   docker:
-    name: Build & Push Docker Images
+    name: Build & push release candidate images
     runs-on: ubuntu-latest
     needs: tests
     if: success()

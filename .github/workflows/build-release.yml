@@ -15,7 +15,7 @@ env:
 
 jobs:
   tests:
-    name: Tests
+    name: Run release tests
     runs-on: ubuntu-latest
 
     outputs:
@@ -78,7 +78,7 @@ jobs:
             done
 
   docker:
-    name: Build & Push Docker Images
+    name: Build & push release images
     runs-on: ubuntu-latest
     needs: tests
 
