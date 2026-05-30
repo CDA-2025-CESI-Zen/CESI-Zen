@@ -1,0 +1,136 @@
+name: Release candidate
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+  packages: write
+  checks: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  tests:
+    name: Run release candidate tests
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'release/')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Clean the solution
+        run: dotnet clean
+
+      - name: Build the solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: |
+          mkdir -p TestResults
+          dotnet test \
+            --configuration Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory TestResults
+
+      - name: Upload test results artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+
+      - name: Publish test report in Job Summary
+        if: always()
+        run: |
+          echo "# Résultats des tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          find TestResults -name "*.trx" -exec grep -h "<Counters" {} \; \
+          | while read line; do
+              TOTAL=$(echo "$line" | sed -n 's/.*total="\([0-9]*\)".*/\1/p')
+              PASSED=$(echo "$line" | sed -n 's/.*passed="\([0-9]*\)".*/\1/p')
+              FAILED=$(echo "$line" | sed -n 's/.*failed="\([0-9]*\)".*/\1/p')
+
+              echo "| Total | Succès | Échecs |" >> $GITHUB_STEP_SUMMARY
+              echo "|-------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+              echo "| $TOTAL | $PASSED | $FAILED |" >> $GITHUB_STEP_SUMMARY
+            done
+
+  docker:
+    name: Build & push release candidate images
+    runs-on: ubuntu-latest
+    needs: tests
+    if: success()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract branch tag
+        id: tag
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          VERSION=v${BRANCH_NAME#release/}
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "Branch tag: $VERSION, Commit SHA: ${{ github.sha }}"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata - FrontOffice
+        id: front_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/frontoffice-api
+          tags: |
+            type=raw,value=${{ steps.tag.outputs.tag }}-rc
+            type=raw,value=${{ steps.tag.outputs.SHARE_COMMIT_SHA }}
+
+      - name: Build and push FrontOffice image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Presentation/FrontOffice.Api/Dockerfile
+          push: true
+          tags: ${{ steps.front_meta.outputs.tags }}
+          labels: ${{ steps.front_meta.outputs.labels }}
+
+      - name: Extract Docker metadata - BackOffice
+        id: back_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/backoffice
+          tags: |
+            type=raw,value=${{ steps.tag.outputs.tag }}-rc
+            type=raw,value=${{ steps.tag.outputs.COMMIT_SHA }}
+
+      - name: Build and push BackOffice image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Presentation/BackOffice/Dockerfile
+          push: true
+          tags: ${{ steps.back_meta.outputs.tags }}
+          labels: ${{ steps.back_meta.outputs.labels }}
