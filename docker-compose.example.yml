@@ -19,16 +19,13 @@ services:
     networks:
       - cesizen
     ports:
-      - 8443:8443
-      - 8080:8080
+      - 8081:80
     env_file:
       - .env
     environment:
-      ASPNETCORE_HTTPS_PORTS: "8443"
-      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_URLS: "http://+:80"
     command: ["-i", "-d"]
     volumes:
-      - ${USERPROFILE}/.aspnet/https:/https
       - ~/.vsdbg:/remote_debugger:rw
     depends_on:
       - db
@@ -40,15 +37,12 @@ services:
     networks:
       - cesizen
     ports:
-      - 443:443
-      - 80:80
+      - 8080:80
     env_file:
       - .env
     environment:
-      ASPNETCORE_HTTPS_PORTS: "443"
-      ASPNETCORE_HTTP_PORTS: "80"
+      ASPNETCORE_URLS: "http://+:80"
     volumes:
-      - ${USERPROFILE}/.aspnet/https:/https
       - ~/.vsdbg:/remote_debugger:rw
     depends_on:
       - db

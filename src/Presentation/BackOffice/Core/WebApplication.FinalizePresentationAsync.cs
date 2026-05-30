@@ -16,7 +16,6 @@ public static partial class Extensions {
             app.UseExceptionHandler("/Error", createScopeForErrors: true);
         }
 
-        app.UseHttpsRedirection();
         app.UseHsts();
         app.UseAntiforgery();
         app.MapStaticAssets();
