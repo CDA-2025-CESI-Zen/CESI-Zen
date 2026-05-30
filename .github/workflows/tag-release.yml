@@ -20,5 +20,5 @@ jobs:
           BRANCH_NAME="${{ github.head_ref }}"
           VERSION=v${BRANCH_NAME#release/}
           
-          git tag "v${VERSION}"
-          git push origin "v${VERSION}"
+          git tag "${VERSION}"
+          git push origin "${VERSION}"
