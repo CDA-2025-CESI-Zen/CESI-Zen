@@ -1,9 +1,9 @@
-name: Release
+name: Release Candidate
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - "release/*"
 
 permissions:
   contents: read
@@ -19,35 +19,43 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      git_tag: ${{ steps.tag.outputs.tag }}
+      release_tag: ${{ steps.tag.outputs.release_tag }}
+      sha_short: ${{ steps.sha.outputs.sha_short }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract tag
+      - name: Extract release tag
         id: tag
         run: |
-          echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          BRANCH_NAME="${GITHUB_REF_NAME#release/}"
+          echo "release_tag=v${BRANCH_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Extract short SHA
+        id: sha
+        run: |
+          echo "sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore
+      - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
+      - name: Clean the solution
+        run: dotnet clean
+
+      - name: Build the solution
+        run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
         run: |
           mkdir -p TestResults
-
           dotnet test \
             --configuration Release \
-            --no-build \
             --logger "trx;LogFileName=test-results.trx" \
             --results-directory TestResults
 
@@ -57,15 +65,23 @@ jobs:
         with:
           name: test-results
           path: TestResults/**/*.trx
-          retention-days: 30
 
-      - name: Publish test report
-        uses: dorny/test-reporter@v1
+      - name: Publish test report in Job Summary
         if: always()
-        with:
-          name: xUnit Tests
-          path: TestResults/**/*.trx
-          reporter: dotnet-trx
+        run: |
+          echo "# Résultats des tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          find TestResults -name "*.trx" -exec grep -h "<Counters" {} \; \
+          | while read line; do
+              TOTAL=$(echo "$line" | sed -n 's/.*total="\([0-9]*\)".*/\1/p')
+              PASSED=$(echo "$line" | sed -n 's/.*passed="\([0-9]*\)".*/\1/p')
+              FAILED=$(echo "$line" | sed -n 's/.*failed="\([0-9]*\)".*/\1/p')
+
+              echo "| Total | Succès | Échecs |" >> $GITHUB_STEP_SUMMARY
+              echo "|-------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+              echo "| $TOTAL | $PASSED | $FAILED |" >> $GITHUB_STEP_SUMMARY
+            done
 
   docker:
     name: Build & Push Docker Images
@@ -75,11 +91,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: tag
-        run: |
-          echo "value=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -94,8 +105,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/frontoffice-api
           tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.tag.outputs.value }}
+            type=raw,value=${{ needs.tests.outputs.release_tag }}-rc
+            type=raw,value=sha-${{ needs.tests.outputs.sha_short }}
 
       - name: Build and push FrontOffice image
         uses: docker/build-push-action@v6
@@ -112,8 +123,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/backoffice
           tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.tag.outputs.value }}
+            type=raw,value=${{ needs.tests.outputs.release_tag }}-rc
+            type=raw,value=sha-${{ needs.tests.outputs.sha_short }}
 
       - name: Build and push BackOffice image
         uses: docker/build-push-action@v6
