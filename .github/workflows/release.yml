@@ -54,6 +54,7 @@ jobs:
           name: 'Test Results'
           path: 'TestResults/*.trx'
           reporter: dotnet-trx
+          use-actions-summary: 'true'
 
   docker:
     name: Build & Push Docker Images
