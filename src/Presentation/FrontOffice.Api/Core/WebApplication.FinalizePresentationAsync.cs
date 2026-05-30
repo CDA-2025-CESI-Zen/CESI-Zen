@@ -11,9 +11,8 @@ public static partial class Extensions {
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseCors("AllowAll");
-        }
+        } else app.UseCors();
 
-        app.UseHttpsRedirection();
         app.UseHsts();
         app.UseAuthentication();
         app.UseAuthorization();

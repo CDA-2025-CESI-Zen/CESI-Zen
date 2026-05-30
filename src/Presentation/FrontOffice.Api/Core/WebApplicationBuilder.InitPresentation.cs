@@ -42,6 +42,13 @@ public static partial class Extensions {
             .AddPolicy("LimitedUserAccess", policy => policy.Requirements.Add(new UserAuthorizationRequirement()));
 
         builder.Services.AddCors(options => {
+            options.AddDefaultPolicy(builder =>
+                builder
+                    .SetIsOriginAllowedToAllowWildcardSubdomains()
+                    .WithOrigins("cesizen.fr", "*.cesizen.fr")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+            );
             options.AddPolicy("AllowAll",
                 builder => builder
                     .AllowAnyOrigin()

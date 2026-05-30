@@ -4,7 +4,7 @@ services:
     restart: always
     shm_size: 128mb
     networks:
-      - cesizen
+      - cesizen-dev
     environment:
       POSTGRES_PASSWORD: ${DB__Password}
       POSTGRES_USER: ${DB__Username}
@@ -16,39 +16,36 @@ services:
     image: adminer:5.4.2
     restart: always
     networks:
-      - cesizen
+      - cesizen-dev
     depends_on:
       - db
     ports:
-      - 8081:8080
+      - 8082:8080
 
   smtp:
     image: maildev/maildev:2.2.1
     environment:
       MAILDEV_SMTP_PORT: ${Smtp__Port}
     networks:
-      - cesizen
+      - cesizen-dev
     ports:
-      - "8082:1080"
+      - "8083:1080"
 
   cesizen-front-office-api:
     build:
       context: .
       dockerfile: src/Presentation/FrontOffice.Api/Dockerfile
     networks:
-      - cesizen
+      - cesizen-dev
     ports:
-      - 8443:8443
-      - 8080:8080
+      - 8080:80
     env_file:
       - .env
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ASPNETCORE_HTTPS_PORTS: "8443"
-      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_URLS: "http://+:80"
     command: ["-i", "-d"]
     volumes:
-      - ${USERPROFILE}/.aspnet/https:/https
       - ~/.vsdbg:/remote_debugger:rw
     depends_on:
       - db
@@ -58,24 +55,22 @@ services:
       context: .
       dockerfile: src/Presentation/BackOffice/Dockerfile
     networks:
-      - cesizen
-    ports:
-      - 443:443
-      - 80:80
+      - cesizen-dev
     env_file:
       - .env
+    ports:
+      - 8081:80
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ASPNETCORE_HTTPS_PORTS: "443"
-      ASPNETCORE_HTTP_PORTS: "80"
+      ASPNETCORE_URLS: "http://+:80"
+      DetailedErrors: "true"
     volumes:
-      - ${USERPROFILE}/.aspnet/https:/https
       - ~/.vsdbg:/remote_debugger:rw
     depends_on:
       - db
 
 networks:
-  cesizen:
+  cesizen-dev:
 
 volumes:
   cesizen-db-dev:
