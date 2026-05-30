@@ -18,17 +18,9 @@ jobs:
     name: Run release tests
     runs-on: ubuntu-latest
 
-    outputs:
-      git_tag: ${{ steps.tag.outputs.tag }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: tag
-        run: |
-          echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

@@ -23,20 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.head_ref, 'release/')
 
-    outputs:
-      branch_tag: ${{ steps.tag.outputs.tag }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Extract branch tag
-        id: tag
-        run: |
-          BRANCH_NAME="${{ github.head_ref }}"
-          VERSION=${BRANCH_NAME#release/}
-          echo "tag=$VERSION" >> $GITHUB_OUTPUT
-          echo "Branch tag: $VERSION"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
