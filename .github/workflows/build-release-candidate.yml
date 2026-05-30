@@ -87,10 +87,16 @@ jobs:
         id: tag
         run: |
           BRANCH_NAME="${{ github.head_ref }}"
-          VERSION=v${BRANCH_NAME#release/}
-          echo "tag=$VERSION" >> $GITHUB_OUTPUT
-          echo "COMMIT_SHA=${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo "Branch tag: $VERSION, Commit SHA: ${{ github.sha }}"
+          VERSION="v${BRANCH_NAME#release/}"
+          PR_NUMBER="${{ github.event.number }}"
+      
+          RC_TAG="${VERSION}-rc${PR_NUMBER}"
+      
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "rc_tag=$RC_TAG" >> $GITHUB_OUTPUT
+      
+          echo "Version: $VERSION"
+          echo "RC Tag: $RC_TAG"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -105,8 +111,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/frontoffice-api
           tags: |
-            type=raw,value=${{ steps.tag.outputs.tag }}-rc
-            type=raw,value=${{ steps.tag.outputs.SHARE_COMMIT_SHA }}
+            type=raw,value=${{ steps.tag.outputs.rc_tag }}
 
       - name: Build and push FrontOffice image
         uses: docker/build-push-action@v6
@@ -123,8 +128,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/backoffice
           tags: |
-            type=raw,value=${{ steps.tag.outputs.tag }}-rc
-            type=raw,value=${{ steps.tag.outputs.COMMIT_SHA }}
+            type=raw,value=${{ steps.tag.outputs.rc_tag }}
 
       - name: Build and push BackOffice image
         uses: docker/build-push-action@v6
