@@ -1,0 +1,120 @@
+name: Development version
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+  packages: write
+  checks: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  tests:
+    name: Run development tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Clean the solution
+        run: dotnet clean
+
+      - name: Build the solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: |
+          mkdir -p TestResults
+
+          dotnet test \
+            --configuration Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory TestResults
+
+      - name: Upload test results artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+
+  docker:
+    name: Build & push development images
+    runs-on: ubuntu-latest
+    needs: tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute development tag
+        id: tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          DEV_TAG="${LAST_TAG}-dev"
+
+          echo "dev_tag=$DEV_TAG" >> $GITHUB_OUTPUT
+          echo "Development tag: $DEV_TAG"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata - FrontOffice
+        id: front_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/frontoffice-api
+          tags: |
+            type=raw,value=${{ steps.tag.outputs.dev_tag }}
+
+      - name: Build and push FrontOffice image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Presentation/FrontOffice.Api/Dockerfile
+          push: true
+          tags: ${{ steps.front_meta.outputs.tags }}
+          labels: ${{ steps.front_meta.outputs.labels }}
+
+      - name: Extract Docker metadata - BackOffice
+        id: back_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/backoffice
+          tags: |
+            type=raw,value=${{ steps.tag.outputs.dev_tag }}
+
+      - name: Build and push BackOffice image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Presentation/BackOffice/Dockerfile
+          push: true
+          tags: ${{ steps.back_meta.outputs.tags }}
+          labels: ${{ steps.back_meta.outputs.labels }}
