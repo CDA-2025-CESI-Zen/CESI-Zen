@@ -98,7 +98,7 @@ jobs:
         id: tag
         run: |
           BRANCH_NAME="${{ github.head_ref }}"
-          VERSION=${BRANCH_NAME#release/}
+          VERSION=v${BRANCH_NAME#release/}
           echo "tag=$VERSION" >> $GITHUB_OUTPUT
           echo "COMMIT_SHA=${{ github.sha }}" >> $GITHUB_OUTPUT
           echo "Branch tag: $VERSION, Commit SHA: ${{ github.sha }}"
