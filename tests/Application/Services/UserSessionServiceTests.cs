@@ -3,11 +3,10 @@ using CesiZen.Application.Services;
 using CesiZen.Domain.Aggregates.Accounts;
 using CesiZen.Domain.Aggregates.Accounts.ValueObjects;
 using CesiZen.Domain.Aggregates.Core;
-using CesiZen.Infrastructure.Core.Exceptions;
-using CesiZen.Infrastructure.Core.ValueObjects;
-using CesiZen.Infrastructure.Services;
+using CesiZen.Application.Core.Exceptions;
 using FluentResponse;
 using Moq;
+using CesiZen.Application.Ports;
 
 namespace CesiZen.Application.Tests.Services;
 public class UserSessionServiceTests {
