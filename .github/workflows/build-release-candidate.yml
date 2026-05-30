@@ -1,9 +1,11 @@
-name: Release Candidate
+name: Release candidate
 
 on:
-  push:
+  pull_request:
     branches:
-      - "release/*"
+      - master
+    paths:
+      - 'release/*'
 
 permissions:
   contents: read
@@ -17,25 +19,22 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
+    if: always()
 
     outputs:
-      release_tag: ${{ steps.tag.outputs.release_tag }}
-      sha_short: ${{ steps.sha.outputs.sha_short }}
+      branch_tag: ${{ steps.tag.outputs.tag }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract release tag
+      - name: Extract branch tag
         id: tag
         run: |
-          BRANCH_NAME="${GITHUB_REF_NAME#release/}"
-          echo "release_tag=v${BRANCH_NAME}" >> $GITHUB_OUTPUT
-
-      - name: Extract short SHA
-        id: sha
-        run: |
-          echo "sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          BRANCH_NAME="${{ github.head_ref }}"
+          VERSION=${BRANCH_NAME#release/}
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          echo "Branch tag: $VERSION"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -87,10 +86,20 @@ jobs:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
     needs: tests
+    if: success()
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Extract branch tag
+        id: tag
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          VERSION=${BRANCH_NAME#release/}
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "Branch tag: $VERSION, Commit SHA: ${{ github.sha }}"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -105,8 +114,9 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/frontoffice-api
           tags: |
-            type=raw,value=${{ needs.tests.outputs.release_tag }}-rc
-            type=raw,value=sha-${{ needs.tests.outputs.sha_short }}
+            type=raw,value=latest
+            type=raw,value=${{ steps.tag.outputs.tag }}-rc
+            type=raw,value=${{ steps.tag.outputs.SHARE_COMMIT_SHA }}
 
       - name: Build and push FrontOffice image
         uses: docker/build-push-action@v6
@@ -123,8 +133,9 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/backoffice
           tags: |
-            type=raw,value=${{ needs.tests.outputs.release_tag }}-rc
-            type=raw,value=sha-${{ needs.tests.outputs.sha_short }}
+            type=raw,value=latest
+            type=raw,value=${{ steps.tag.outputs.tag }}-rc
+            type=raw,value=${{ steps.tag.outputs.COMMIT_SHA }}
 
       - name: Build and push BackOffice image
         uses: docker/build-push-action@v6
