@@ -62,38 +62,32 @@ jobs:
     name: Build & push development images
     runs-on: ubuntu-latest
     needs: tests
-
+  
+    outputs:
+      front_digest: ${{ steps.front_build.outputs.digest }}
+      back_digest: ${{ steps.back_build.outputs.digest }}
+  
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Compute development tag
-        id: tag
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
-          DEV_TAG="${LAST_TAG}-dev"
-
-          echo "dev_tag=$DEV_TAG" >> $GITHUB_OUTPUT
-          echo "Development tag: $DEV_TAG"
-
+  
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
+  
       - name: Extract Docker metadata - FrontOffice
         id: front_meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/frontoffice-api
           tags: |
-            type=raw,value=${{ steps.tag.outputs.dev_tag }}
-
+            type=raw,value=latest-dev
+  
       - name: Build and push FrontOffice image
+        id: front_build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -101,16 +95,17 @@ jobs:
           push: true
           tags: ${{ steps.front_meta.outputs.tags }}
           labels: ${{ steps.front_meta.outputs.labels }}
-
+  
       - name: Extract Docker metadata - BackOffice
         id: back_meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/backoffice
           tags: |
-            type=raw,value=${{ steps.tag.outputs.dev_tag }}
-
+            type=raw,value=latest-dev
+  
       - name: Build and push BackOffice image
+        id: back_build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -118,3 +113,51 @@ jobs:
           push: true
           tags: ${{ steps.back_meta.outputs.tags }}
           labels: ${{ steps.back_meta.outputs.labels }}
+          
+  update-gitops:
+    name: Update GitOps manifests
+    runs-on: ubuntu-latest
+    needs: docker
+  
+    permissions:
+      contents: write
+  
+    steps:
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v4
+        with:
+          repository: CDA-2025-CESI-Zen/CESI-Zen-GitOps
+          token: ${{ secrets.GITOPS_REPO_TOKEN }}
+          path: gitops
+  
+      - name: Update image digests
+        run: |
+          cd gitops
+  
+          FRONT_DIGEST="${{ needs.docker.outputs.front_digest }}"
+          BACK_DIGEST="${{ needs.docker.outputs.back_digest }}"
+  
+          yq -i '
+            (.images[] | select(.name == "ghcr.io/'"${{ github.repository_owner }}"'/frontoffice-api")).digest = strenv(FRONT_DIGEST)
+          ' overlays/dev/kustomization.yaml
+  
+          yq -i '
+            (.images[] | select(.name == "ghcr.io/'"${{ github.repository_owner }}"'/backoffice")).digest = strenv(BACK_DIGEST)
+          ' overlays/dev/kustomization.yaml
+  
+          cat overlays/dev/kustomization.yaml
+  
+      - name: Commit changes
+        run: |
+          cd gitops
+  
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+  
+          git add overlays/dev/kustomization.yaml
+  
+          git diff --cached --quiet && exit 0
+  
+          git commit -m "chore(dev): update image digests"
+  
+          git push
