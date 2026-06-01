@@ -40,6 +40,8 @@ public record User : AggregateRoot<User> {
         /// <summary> Whether or not the user has been anonymized. </summary>
         public bool IsAnonymous => this.MailAddress is null;
 
+        /// <summary> Whether or not the user has been suspended. </summary>
+        public bool IsSuspended { get; internal init; }
 
 
         public override Func<IRepository<User>, Task<IResponse<User>>>? RepositoryInvariant => async (repository) => 
@@ -105,6 +107,14 @@ public record User : AggregateRoot<User> {
                 Password     = Password.FromNoise(),
                 DomainEvents = this.MailAddress is not null
                     ? [..this.DomainEvents, new UserAnonymized(this.Id, this.MailAddress)]
+                    : this.DomainEvents
+            };
+
+        public User WithSuspension(bool value) =>
+            this with {
+                IsSuspended = value,
+                DomainEvents = this.IsSuspended != value
+                    ? [..this.DomainEvents, new UserSuspensionChanged(this.Id, value)]
                     : this.DomainEvents
             };
 
