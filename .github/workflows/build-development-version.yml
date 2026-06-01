@@ -136,18 +136,14 @@ jobs:
       - name: Update image digests
         run: |
           cd gitops
-  
-          FRONT_DIGEST="${{ needs.docker.outputs.front_digest }}"
-          BACK_DIGEST="${{ needs.docker.outputs.back_digest }}"
-
           FILE=overlays/dev/kustomization.yaml
 
           yq -i '
-            (.images[] | select(.name == "ghcr.io/cda-2025-cesi-zen/frontoffice-api")).digest = strenv(FRONT_DIGEST)
+            (.images[] | select(.name == "ghcr.io/cda-2025-cesi-zen/frontoffice-api")).digest = "${{ needs.docker.outputs.front_digest }}"
           ' "$FILE"
 
           yq -i '
-            (.images[] | select(.name == "ghcr.io/cda-2025-cesi-zen/backoffice")).digest = strenv(BACK_DIGEST)
+            (.images[] | select(.name == "ghcr.io/cda-2025-cesi-zen/backoffice")).digest = "${{ needs.docker.outputs.back_digest }}"
           ' "$FILE"
   
       - name: Commit changes
@@ -161,6 +157,6 @@ jobs:
   
           git diff --cached --quiet && exit 0
   
-          git commit -m "chore(dev): update image digests"
+          git commit -m "Updated image digests"
   
           git push
