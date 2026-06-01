@@ -21,7 +21,15 @@ public sealed class UserSessionService(
             .TryGetAsync(user => user.MailAddress?.Address == mailAddress)
             .OnSuccessAsync(user => user
                 .TryVerifyPassword(password)
-                .OnSuccessAsync(() => repository.TryUpdateAsync(user.Id, user => user.WithNewActivity()))
+                .OnFailureAsync(e => {
+                    var updated = user.WithNewFailedAuthAttempt(out bool exceededLimit);
+                    return repository
+                        .TryUpdateAsync(user.Id, _ => updated)
+                        .OnSuccessAsync(_ => exceededLimit
+                            ? Response.Failure(new Exception("Limite de tentative de connexion dépassée !"))
+                            : Response.Failure(e)
+                        );
+                }).OnSuccessAsync(() => repository.TryUpdateAsync(user.Id, user => user.WithNewActivity()))
             ).OnSuccessAsync(user => authService.TryGenerateToken(user).OnSuccess(token => new UserSession(token, user)));
 
     public Task<IResponse<UserSession>> TryRegisterAsync(string mailAddress, string password, Pin pin) =>
