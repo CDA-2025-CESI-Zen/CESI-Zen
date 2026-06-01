@@ -129,8 +129,8 @@ public record User : AggregateRoot<User> {
         public User WithSuspension(bool value, string? reason = null) =>
             this with {
                 IsSuspended = value,
-                DomainEvents = this.IsSuspended != value
-                    ? [..this.DomainEvents, new UserSuspensionChanged(this.Id, value, reason)]
+                DomainEvents = this.IsSuspended != value && this.MailAddress is not null
+                    ? [..this.DomainEvents, new UserSuspensionChanged(this.Id, this.MailAddress, value, reason)]
                     : this.DomainEvents
             };
 
