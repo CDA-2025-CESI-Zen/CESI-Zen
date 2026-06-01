@@ -130,22 +130,25 @@ jobs:
           token: ${{ secrets.GITOPS_REPO_TOKEN }}
           path: gitops
   
+      - name: Install yq
+        uses: mikefarah/yq@v4.44.3
+
       - name: Update image digests
         run: |
           cd gitops
   
           FRONT_DIGEST="${{ needs.docker.outputs.front_digest }}"
           BACK_DIGEST="${{ needs.docker.outputs.back_digest }}"
-  
+
+          FILE=overlays/dev/kustomization.yaml
+
           yq -i '
-            (.images[] | select(.name == "ghcr.io/'"${{ github.repository_owner }}"'/frontoffice-api")).digest = strenv(FRONT_DIGEST)
-          ' overlays/dev/kustomization.yaml
-  
+            (.images[] | select(.name == "ghcr.io/cda-2025-cesi-zen/frontoffice-api")).digest = env(FRONT_DIGEST)
+          ' "$FILE"
+
           yq -i '
-            (.images[] | select(.name == "ghcr.io/'"${{ github.repository_owner }}"'/backoffice")).digest = strenv(BACK_DIGEST)
-          ' overlays/dev/kustomization.yaml
-  
-          cat overlays/dev/kustomization.yaml
+            (.images[] | select(.name == "ghcr.io/cda-2025-cesi-zen/backoffice")).digest = env(BACK_DIGEST)
+          ' "$FILE"
   
       - name: Commit changes
         run: |
