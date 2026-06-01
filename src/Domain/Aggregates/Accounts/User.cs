@@ -134,12 +134,14 @@ public record User : AggregateRoot<User> {
                     : this.DomainEvents
             };
 
-        public User WithNewFailedAuthAttempt() {
+        public User WithNewFailedAuthAttempt(out bool exceededLimit) {
             var updated = this with {
                 AuthFailedAttemptCount = this.AuthFailedAttemptCount + 1
             };
 
-            if (updated.AuthFailedAttemptCount is >= 8)
+            exceededLimit = updated.AuthFailedAttemptCount is >= 6;
+            
+            if (exceededLimit)
                 updated = updated.WithSuspension(true, "Limite de tentatives de connexion dépassée");
 
             return updated;
