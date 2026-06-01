@@ -32,9 +32,10 @@ services:
       - "8083:1080"
 
   cesizen-front-office-api:
-    build:
-      context: .
-      dockerfile: src/Presentation/FrontOffice.Api/Dockerfile
+    image: ghcr.io/cda-2025-cesi-zen/frontoffice-api:latest-dev
+    # build:
+    #   context: .
+    #   dockerfile: src/Presentation/FrontOffice.Api/Dockerfile
     networks:
       - cesizen-dev
     ports:
