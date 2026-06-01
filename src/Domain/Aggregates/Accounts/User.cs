@@ -44,6 +44,11 @@ public record User : AggregateRoot<User> {
         public bool IsSuspended { get; internal init; }
 
 
+        /// <summary> The ammount of failed authentication attemps. </summary>
+        public int AuthFailedAttemptCount { get; internal init; }
+
+
+
         public override Func<IRepository<User>, Task<IResponse<User>>>? RepositoryInvariant => async (repository) => 
             this.MailAddress?.Address is string mailAddress && await repository.AnyAsync((x) =>
                 x.Id != this.Id &&
@@ -93,7 +98,10 @@ public record User : AggregateRoot<User> {
                     .OnSuccess(password => this with { Password = password });
 
         public User WithNewActivity() =>
-            this with { LastActivity = DateTime.UtcNow };
+            this with {
+                LastActivity = DateTime.UtcNow,
+                AuthFailedAttemptCount = 0
+            };
 
         public User WithNewDiagnosisResult(int score) =>
             this with {
@@ -110,14 +118,6 @@ public record User : AggregateRoot<User> {
                     : this.DomainEvents
             };
 
-        public User WithSuspension(bool value) =>
-            this with {
-                IsSuspended = value,
-                DomainEvents = this.IsSuspended != value
-                    ? [..this.DomainEvents, new UserSuspensionChanged(this.Id, value)]
-                    : this.DomainEvents
-            };
-
         public IResponse<User> TryStartAnonymizationProcess() =>
             this.AnonymizationProcessStartedAt is not null
                 ? Response.Failure<User>(new InvariantException<User>("Le compte est déjà en train d'être anonymisé !"))
@@ -125,6 +125,25 @@ public record User : AggregateRoot<User> {
                     AnonymizationProcessStartedAt = DateTime.UtcNow,
                     DomainEvents                  = [..this.DomainEvents, new UserAnonymizationProcessStarted(this.Id)]
                 });
+
+        public User WithSuspension(bool value, string? reason = null) =>
+            this with {
+                IsSuspended = value,
+                DomainEvents = this.IsSuspended != value
+                    ? [..this.DomainEvents, new UserSuspensionChanged(this.Id, value, reason)]
+                    : this.DomainEvents
+            };
+
+        public User WithNewFailedAuthAttempt() {
+            var updated = this with {
+                AuthFailedAttemptCount = this.AuthFailedAttemptCount + 1
+            };
+
+            if (updated.AuthFailedAttemptCount is >= 8)
+                updated = updated.WithSuspension(true, "Limite de tentatives de connexion dépassée");
+
+            return updated;
+        }
 
         public IResponse TryVerifyPassword(string value) =>
             !this.IsAnonymous
