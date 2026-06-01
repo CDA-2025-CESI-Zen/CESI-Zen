@@ -130,9 +130,6 @@ jobs:
           token: ${{ secrets.GITOPS_REPO_TOKEN }}
           path: gitops
   
-      - name: Install yq
-        uses: mikefarah/yq@v4.44.3
-
       - name: Update image digests
         run: |
           cd gitops
