@@ -6,7 +6,7 @@ using FluentResponse.Interfaces;
 namespace CesiZen.Domain.Aggregates.Accounts.ValueObjects;
 public readonly record struct Password(string Hash) {
 
-    private const int PBKDF2_ITER_COUNT    = 1000; 
+    private const int PBKDF2_ITER_COUNT    = 100_000; 
     private const int PBKDF2_SUBKEY_LENGTH = 256/8;
     private const int SALT_SIZE            = 128/8;
 
