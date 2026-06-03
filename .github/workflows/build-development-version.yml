@@ -1,13 +1,9 @@
 name: Development version
 
 on:
-  pull_request:
+  push:
     branches:
       - develop
-    types:
-      - opened
-      - synchronize
-      - reopened
 
 permissions:
   contents: read
