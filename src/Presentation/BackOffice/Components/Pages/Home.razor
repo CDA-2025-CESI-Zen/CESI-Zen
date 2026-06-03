@@ -52,8 +52,8 @@
     ViewModel model = new ViewModel();
 
     public class ViewModel {
-        public string MailAddress { get; set; }
-        public string Password    { get; set; }
+        public string MailAddress { get; set; } = "";
+        public string Password    { get; set; } = "";
     }
 
     private string? ValidateMailAddress(string value) =>
