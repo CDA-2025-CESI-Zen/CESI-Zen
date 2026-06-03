@@ -40,6 +40,13 @@ public record User : AggregateRoot<User> {
         /// <summary> Whether or not the user has been anonymized. </summary>
         public bool IsAnonymous => this.MailAddress is null;
 
+        /// <summary> Whether or not the user has been suspended. </summary>
+        public bool IsSuspended { get; internal init; }
+
+
+        /// <summary> The ammount of failed authentication attemps. </summary>
+        public int AuthFailedAttemptCount { get; internal init; }
+
 
 
         public override Func<IRepository<User>, Task<IResponse<User>>>? RepositoryInvariant => async (repository) => 
@@ -91,7 +98,10 @@ public record User : AggregateRoot<User> {
                     .OnSuccess(password => this with { Password = password });
 
         public User WithNewActivity() =>
-            this with { LastActivity = DateTime.UtcNow };
+            this with {
+                LastActivity = DateTime.UtcNow,
+                AuthFailedAttemptCount = 0
+            };
 
         public User WithNewDiagnosisResult(int score) =>
             this with {
@@ -115,6 +125,27 @@ public record User : AggregateRoot<User> {
                     AnonymizationProcessStartedAt = DateTime.UtcNow,
                     DomainEvents                  = [..this.DomainEvents, new UserAnonymizationProcessStarted(this.Id)]
                 });
+
+        public User WithSuspension(bool value, string? reason = null) =>
+            this with {
+                IsSuspended = value,
+                DomainEvents = this.IsSuspended != value && this.MailAddress is not null
+                    ? [..this.DomainEvents, new UserSuspensionChanged(this.Id, this.MailAddress, value, reason)]
+                    : this.DomainEvents
+            };
+
+        public User WithNewFailedAuthAttempt(out bool exceededLimit) {
+            var updated = this with {
+                AuthFailedAttemptCount = this.AuthFailedAttemptCount + 1
+            };
+
+            exceededLimit = updated.AuthFailedAttemptCount is >= 6;
+            
+            if (exceededLimit)
+                updated = updated.WithSuspension(true, "Limite de tentatives de connexion dépassée");
+
+            return updated;
+        }
 
         public IResponse TryVerifyPassword(string value) =>
             !this.IsAnonymous

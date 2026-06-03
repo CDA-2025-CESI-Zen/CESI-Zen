@@ -19,10 +19,29 @@ public sealed class UserSessionService(
     public Task<IResponse<UserSession>> TryAuthAsync(string mailAddress, string password) =>
         repository
             .TryGetAsync(user => user.MailAddress?.Address == mailAddress)
-            .OnSuccessAsync(user => user
-                .TryVerifyPassword(password)
-                .OnSuccessAsync(() => repository.TryUpdateAsync(user.Id, user => user.WithNewActivity()))
-            ).OnSuccessAsync(user => authService.TryGenerateToken(user).OnSuccess(token => new UserSession(token, user)));
+            .OnSuccessAsync(async user =>
+            
+                user.IsSuspended
+                    ? Response.Failure<User>(new Exception("Compte désactivé ! Contactez contact@cesizen.fr pour le rétablir."))
+                    : await user
+                        .TryVerifyPassword(password)
+                        .OnFailureAsync(e => {
+
+                            var updated = user.WithNewFailedAuthAttempt(out bool exceededLimit);
+                            return repository
+                                .TryUpdateAsync(user.Id, _ => updated)
+                                .OnSuccessAsync(_ => exceededLimit
+                                    ? Response.Failure(new Exception("Limite de tentative de connexion dépassée !"))
+                                    : Response.Failure(e)
+                                );
+
+                        }).OnSuccessAsync(() => repository.TryUpdateAsync(user.Id, user => user.WithNewActivity()))
+            ).OnSuccessAsync(user =>
+
+                authService
+                    .TryGenerateToken(user)
+                    .OnSuccess(token => new UserSession(token, user))
+            );
 
     public Task<IResponse<UserSession>> TryRegisterAsync(string mailAddress, string password, Pin pin) =>
         registrationValidationCacheService

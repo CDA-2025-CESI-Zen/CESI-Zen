@@ -64,6 +64,7 @@ public static partial class Extensions {
         builder.Services.AddScoped<IDomainEventListener<UserAnonymizationProcessStarted>, UserAnonymizationProcessStartedListener>();
         builder.Services.AddScoped<IDomainEventListener<UserAnonymized>,                  UserAnonymizedListener>();
         builder.Services.AddScoped<IDomainEventListener<UserMailAddressChanged>,          UserMailAddressChangedListener>();
+        builder.Services.AddScoped<IDomainEventListener<UserSuspensionChanged>,           UserSuspensionChangedListener>();
 
     }
 }
