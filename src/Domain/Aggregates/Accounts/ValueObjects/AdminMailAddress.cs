@@ -4,6 +4,8 @@ using FluentResponse;
 using FluentResponse.Interfaces;
 
 namespace CesiZen.Domain.Aggregates.Accounts.ValueObjects;
+
+/// <summary> A mail address for admins in the 'cesizen.fr' domain. </summary>
 public class AdminMailAddress(string value) : MailAddress(value) {
     public static IResponse<AdminMailAddress> TryCreate(string value) {
 

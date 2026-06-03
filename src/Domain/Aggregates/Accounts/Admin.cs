@@ -25,6 +25,10 @@ public record Admin : AggregateRoot<Admin> {
     #endregion
     #region CONSTRUCTORS
 
+        /// <summary>
+        /// Returns an admin with an account creation domain event
+        /// if the mail address and password are valid.
+        /// </summary>
         public static IResponse<Admin> TryCreate(
             string mailAdress,
             string password
@@ -42,6 +46,10 @@ public record Admin : AggregateRoot<Admin> {
     #endregion
     #region METHODS
 
+        /// <summary>
+        /// Returns a copy of the admin with the given mail address value if valid,
+        /// and with a mail address change domain event if it is different from the previous one.
+        /// </summary>
         public IResponse<Admin> TryWithMailAddress(string value) =>
             AdminMailAddress
                 .TryCreate(value)
@@ -51,11 +59,13 @@ public record Admin : AggregateRoot<Admin> {
                         MailAddress  = mailAddress
                     } : this);
 
+        /// <summary> Returns a copy of the admin with the given password hashed value if valid. </summary>
         public IResponse<Admin> TryWithPassword(string value) =>
             Password
                 .TryCreate(value)
                 .OnSuccess(password => this with { Password = password });
 
+        /// <summary> Tries to verify the admin's password with the given one. </summary>
         public IResponse TryVerifyPassword(string value) =>
             this.Password.TryVerify(value);
 

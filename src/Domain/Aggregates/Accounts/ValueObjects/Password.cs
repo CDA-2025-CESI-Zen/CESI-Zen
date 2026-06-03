@@ -4,6 +4,8 @@ using FluentResponse;
 using FluentResponse.Interfaces;
 
 namespace CesiZen.Domain.Aggregates.Accounts.ValueObjects;
+
+/// <summary> An account password made out of at least 4 digits, 4 lower cases, and 4 upper cases. </summary>
 public readonly record struct Password(string Hash) {
 
     private const int PBKDF2_ITER_COUNT    = 100_000; 

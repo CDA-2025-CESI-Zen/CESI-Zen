@@ -21,27 +21,33 @@ public sealed class UserSessionService(
             .TryGetAsync(user => user.MailAddress?.Address == mailAddress)
             .OnSuccessAsync(async user =>
             
+                // If the user is suspended, terminate the authentication.
+                // Otherwise, try to verify their password.
                 user.IsSuspended
-                    ? Response.Failure<User>(new Exception("Compte désactivé ! Contactez contact@cesizen.fr pour le rétablir."))
+                    ? Response.Failure<UserSession>(new Exception("Compte désactivé ! Contactez contact@cesizen.fr pour le rétablir."))
                     : await user
                         .TryVerifyPassword(password)
                         .OnFailureAsync(e => {
 
+                            // If it is invalid, register the failed attempt.
                             var updated = user.WithNewFailedAuthAttempt(out bool exceededLimit);
                             return repository
                                 .TryUpdateAsync(user.Id, _ => updated)
                                 .OnSuccessAsync(_ => exceededLimit
-                                    ? Response.Failure(new Exception("Limite de tentative de connexion dépassée !"))
-                                    : Response.Failure(e)
+                                    ? Response.Failure<UserSession>(new Exception("Limite de tentative de connexion dépassée !"))
+                                    : Response.Failure<UserSession>(e)
                                 );
 
-                        }).OnSuccessAsync(() => repository.TryUpdateAsync(user.Id, user => user.WithNewActivity()))
-            ).OnSuccessAsync(user =>
+                        }).OnSuccessAsync(() =>
 
-                authService
-                    .TryGenerateToken(user)
-                    .OnSuccess(token => new UserSession(token, user))
-            );
+                            // Otherwise, register the new activity
+                            // And generate the session token.
+                            repository
+                                .TryUpdateAsync(user.Id, user => user.WithNewActivity())
+                                .OnSuccessAsync(user =>
+                                    authService
+                                        .TryGenerateToken(user)
+                                        .OnSuccess(token => new UserSession(token, user)))));
 
     public Task<IResponse<UserSession>> TryRegisterAsync(string mailAddress, string password, Pin pin) =>
         registrationValidationCacheService
@@ -147,7 +153,6 @@ public sealed class UserSessionService(
                             user.MailAddress!,
                             "Demande de changement de mot de passe pour votre compte CESI Zen",
                             $"Veuillez entrer ce code PIN pour changer le mot de passe de votre compte: {pin}.\nIl expirera dans {passwordResetCacheService.CacheDuration.Minutes} minutes.")
-                    
                     )
             );
 

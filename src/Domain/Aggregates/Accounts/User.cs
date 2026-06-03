@@ -64,6 +64,10 @@ public record User : AggregateRoot<User> {
             this.Password    = password;
         }
         
+        /// <summary>
+        /// Returns a user with an account creation domain event
+        /// if the mail address and password are valid.
+        /// </summary>
         public static IResponse<User> TryCreate(
             string mailAdress,
             string password
@@ -77,6 +81,10 @@ public record User : AggregateRoot<User> {
     #endregion
     #region METHODS
 
+        /// <summary>
+        /// Returns a copy of the user with the given mail address value if valid,
+        /// and with a mail address change domain event if it is different from the previous one.
+        /// </summary>
         public IResponse<User> TryWithMailAddress(string value) =>
             this.IsAnonymous
                 ? Response.Failure<User>(new InvariantException<User>("L'adresse électronique d'un compte anonymisé ne peut être redéfinie !"))
@@ -90,6 +98,7 @@ public record User : AggregateRoot<User> {
                         } : this);
                 
 
+        /// <summary> Returns a copy of the user with the given password hashed value if valid. </summary>
         public IResponse<User> TryWithPassword(string value) =>
             this.IsAnonymous
                 ? Response.Failure<User>(new InvariantException<User>("Le mot de passe d'un compte anonymisé ne peut être redéfini !"))
@@ -97,18 +106,30 @@ public record User : AggregateRoot<User> {
                     .TryCreate(value)
                     .OnSuccess(password => this with { Password = password });
 
+        /// <summary>
+        /// Returns a copy of the user with their latest activity set to now (UTC)
+        /// and with their auth failed attempt count reset.
+        /// </summary>
         public User WithNewActivity() =>
             this with {
                 LastActivity = DateTime.UtcNow,
                 AuthFailedAttemptCount = 0
             };
 
+        /// <summary>
+        /// Returns a copy of the user with a new diagnosis result
+        /// and with their first diagnosis result set to that value if it wasn't already set.
+        /// </summary>
         public User WithNewDiagnosisResult(int score) =>
             this with {
                 FirstDiagnosisResult = this.FirstDiagnosisResult ?? new (score),
                 LastDiagnosisResult  = new (score),
             };
 
+        /// <summary>
+        /// Returns a copy of the user with their mail address unset,
+        /// their password replaced by noise, and with an anonymization domain event.
+        /// </summary>
         public User AsAnonymized() =>
             this with {
                 MailAddress  = null,
@@ -118,6 +139,7 @@ public record User : AggregateRoot<User> {
                     : this.DomainEvents
             };
 
+        /// <summary> Returns a copy of the user with a new ongoing anonymization process. </summary>
         public IResponse<User> TryStartAnonymizationProcess() =>
             this.AnonymizationProcessStartedAt is not null
                 ? Response.Failure<User>(new InvariantException<User>("Le compte est déjà en train d'être anonymisé !"))
@@ -126,6 +148,10 @@ public record User : AggregateRoot<User> {
                     DomainEvents                  = [..this.DomainEvents, new UserAnonymizationProcessStarted(this.Id)]
                 });
 
+        /// <summary>
+        /// Returns a copy of the user with their suspension updated
+        /// and with a suspension change domain event if the suspension value is different.
+        /// </summary>
         public User WithSuspension(bool value, string? reason = null) =>
             this with {
                 IsSuspended = value,
@@ -134,6 +160,10 @@ public record User : AggregateRoot<User> {
                     : this.DomainEvents
             };
 
+        /// <summary>
+        /// Returns a copy of the user with a new failed authentication attempt.
+        /// If it reaches 6, the returned user will be suspended.
+        /// </summary>
         public User WithNewFailedAuthAttempt(out bool exceededLimit) {
             var updated = this with {
                 AuthFailedAttemptCount = this.AuthFailedAttemptCount + 1
@@ -147,6 +177,7 @@ public record User : AggregateRoot<User> {
             return updated;
         }
 
+        /// <summary> Tries to verify the user's password with the given one. </summary>
         public IResponse TryVerifyPassword(string value) =>
             !this.IsAnonymous
                 ? this.Password.TryVerify(value)
