@@ -115,6 +115,25 @@ public class UserSessionServiceTests {
 
         }
 
+        [Fact]
+        public async Task TryAuthAsync_WithSuspendedUser_ShouldFail() {
+            
+            // Arrange
+            var mailAddress = "nom@domaine.fr";
+            var password    = "abcdABCD1234";
+
+            var user = User.TryCreate(mailAddress, password).Unwrap().WithSuspension(true);
+            repository
+                .Setup(r => r.TryGetAsync(It.IsAny<Func<User, bool>>()))
+                .ReturnsAsync(Response.Success(user));
+
+            // Act
+            var response = await service.TryAuthAsync(mailAddress, password);
+
+            // Assert
+            response.Should().BeAssignableTo<IFailure>();
+
+        }
 
     #endregion
     #region TryRegisterAsync
