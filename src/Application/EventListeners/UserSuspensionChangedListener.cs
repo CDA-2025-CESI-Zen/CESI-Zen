@@ -14,17 +14,21 @@ public sealed class UserSuspensionChangedListener(
             ? domainEvent.Suspension
                 ? await mailService.TrySendEmailAsync(
                     domainEvent.UserMailAddress,
-                    "Suspension de votre compte CESI Zen",
-                    "Votre compte CESI Zen a été suspendu" + domainEvent.Reason is not null
-                        ? $" pour la raison suivante : \"{domainEvent.Reason}\"."
-                        : "."
+                    "Désactivation de votre compte CESI Zen",
+                    "Votre compte CESI Zen a été désactivé" + (
+                        domainEvent.Reason is not null
+                            ? $" pour la raison suivante : \"{domainEvent.Reason}\"."
+                            : "."
+                        )
 
                 ) : await mailService.TrySendEmailAsync(
                     domainEvent.UserMailAddress,
-                    "Rétablissement de votre compte CESI Zen",
-                    "Votre compte CESI Zen a été rétabli" + domainEvent.Reason is not null
-                        ? $" pour la raison suivante : \"{domainEvent.Reason}\"."
-                        : "."
+                    "Réactivation de votre compte CESI Zen",
+                    "Votre compte CESI Zen a été réactivé" + (
+                        domainEvent.Reason is not null
+                            ? $" pour la raison suivante : \"{domainEvent.Reason}\"."
+                            : "."
+                        )
 
                 )
             : Response.Success();

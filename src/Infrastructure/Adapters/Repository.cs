@@ -29,11 +29,20 @@ public class Repository<T>(
         }
 
         protected async Task<IResponse<T>> TryDispatchEventsAsync(T entity) {
-
+            
+            // We make sure that EF Core treats the entity as read only.
+            var previouslyAttached = this.table.Entry(entity).State != EntityState.Detached;
+            this.table.Entry(entity).State = EntityState.Detached;
             entity = entity.WithConsumedEvents(out var domainEvents);
 
             return await domainEventDispatcher.DispatchAsync(domainEvents).OnSuccessAsync(() => {
+
+                // We make sure that EF Core keeps track of eventual domain event changes.
+                if (previouslyAttached)
+                    this.table.Attach(entity);
+                    
                 return entity;
+
             });
         }
 
@@ -49,30 +58,37 @@ public class Repository<T>(
         }
 
         public virtual Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, T> changes) =>
-            this.TryGetAsync(id).OnSuccessAsync(oldEntity =>
-                this.TryValidateAsync(changes(oldEntity)).OnSuccessAsync(async entity => {
+            this.TryGetAsync(id).OnSuccessAsync(tracked =>
+                this.TryValidateAsync(changes(tracked)).OnSuccessAsync(async updated => {
 
-                    this.table.Entry(oldEntity).State = EntityState.Detached;
-                    this.table.Attach(entity);
-                    this.table.Entry(entity).State = EntityState.Modified;
+                    this.table.Entry(tracked).CurrentValues.SetValues(updated);
                     await this.dbContext.SaveChangesAsync();
-                    this.table.Entry(oldEntity).State = EntityState.Detached;
+                    return await this.TryDispatchEventsAsync(updated).OnSuccessAsync(_ => tracked);
                 
                 })
-            ).OnSuccessAsync(TryDispatchEventsAsync);
+            );
 
         public virtual Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, IResponse<T>> changes) =>
-            this.TryGetAsync(id).OnSuccessAsync(oldEntity =>
-                changes(oldEntity).OnSuccessAsync(this.TryValidateAsync).OnSuccessAsync(async entity => {
+            this.TryGetAsync(id).OnSuccessAsync(tracked =>
+                changes(tracked).OnSuccessAsync(this.TryValidateAsync).OnSuccessAsync(async updated => {
 
-                    this.table.Entry(oldEntity).State = EntityState.Detached;
-                    this.table.Attach(entity);
-                    this.table.Entry(entity).State = EntityState.Modified;
+                    this.table.Entry(tracked).CurrentValues.SetValues(updated);
                     await this.dbContext.SaveChangesAsync();
-                    this.table.Entry(oldEntity).State = EntityState.Detached;
-                
+                    return await this.TryDispatchEventsAsync(updated).OnSuccessAsync(_ => tracked);
+
                 })
-            ).OnSuccessAsync(TryDispatchEventsAsync);
+            );
+
+        public virtual Task<IResponse<T>> TryUpdateAsync(Id id, Func<T, Task<IResponse<T>>> changes) =>
+            this.TryGetAsync(id).OnSuccessAsync(tracked =>
+                changes(tracked).OnSuccessAsync(this.TryValidateAsync).OnSuccessAsync(async updated => {
+
+                    this.table.Entry(tracked).CurrentValues.SetValues(updated);
+                    await this.dbContext.SaveChangesAsync();
+                    return await this.TryDispatchEventsAsync(updated).OnSuccessAsync(_ => tracked);
+
+                })
+            );
 
         public virtual async Task<IResponse> TryDeleteAsync(T entity) {
             this.table.Remove(entity);

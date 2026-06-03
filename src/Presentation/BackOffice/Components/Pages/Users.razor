@@ -43,11 +43,6 @@
             </EditTemplate>
         </PropertyColumn>
         <PropertyColumn Title="Compte créé le" Property="x => x.FirstActivity" Editable="false" />
-        <PropertyColumn Title="Anonymisé" Property="x => x.Anonymized" Editable="false">
-            <CellTemplate>
-                <MudCheckBox Value="context.Item.Anonymized" ReadOnly="true" />
-            </CellTemplate>
-        </PropertyColumn>
         <TemplateColumn>
             <EditTemplate>
                 <MudTextField Label="Mot de passe" @bind-Value="@password" InputType="InputType.Password" Validation="@((string value) => ValidatePassword(value))"/>
@@ -56,8 +51,26 @@
         </TemplateColumn>
         <TemplateColumn>
             <CellTemplate>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Rounded.LockPerson" Color="Color.Warning" OnClick="@(() => AnonymizeItemAsync(context.Item))" Disabled="@context.Item.Anonymized"/>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Color="Color.Warning" OnClick="@(() => DeleteItemAsync(context.Item))"/>
+                <MudIconButton
+                    Size="@Size.Small"
+                    Icon="@(context.Item.Suspended ? Icons.Material.Rounded.LockOpen : Icons.Material.Rounded.Lock)"
+                    Color="@(context.Item.Suspended ? Color.Default : Color.Warning)"
+                    OnClick="@(() => ToggleItemSuspensionAsync(context.Item))"
+                    Disabled="@context.Item.Anonymized"
+                />
+                <MudIconButton
+                    Size="@Size.Small"
+                    Icon="@Icons.Material.Rounded.VisibilityOff"
+                    Color="Color.Warning"
+                    OnClick="@(() => AnonymizeItemAsync(context.Item))"
+                    Disabled="@context.Item.Anonymized"
+                />
+                <MudIconButton
+                    Size="@Size.Small"
+                    Icon="@Icons.Material.Outlined.Delete"
+                    Color="Color.Warning"
+                    OnClick="@(() => DeleteItemAsync(context.Item))"
+                />
             </CellTemplate>
         </TemplateColumn>
     </Columns>
@@ -71,6 +84,7 @@
         public Id       Id            { get; set; } = default;
         public string   MailAddress   { get; set; } = "nom@domaine.fr";
         public bool     Anonymized    { get; set; }
+        public bool     Suspended     { get; set; }
         public DateTime FirstActivity { get; set; }
     }
 
@@ -82,7 +96,8 @@
     protected override async Task OnInitializedAsync() {
         items = (await queryService.GetAllAsync()).Select(x => new ViewModel {
             Id            = x.Id,
-            MailAddress   = x.MailAddress?.Address ?? "",
+            MailAddress   = x.MailAddress?.Address ?? "Anonyme",
+            Suspended     = x.IsSuspended,
             Anonymized    = x.IsAnonymous,
             FirstActivity = x.FirstActivity.ToLocalTime()
         }).OrderByDescending(x => x.Id);
@@ -119,6 +134,14 @@
             await commandService
                 .TryDeleteAsync(item.Id)
                 .OnSuccessAsync(OnInitializedAsync)
+                .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
+    }
+
+    private async Task ToggleItemSuspensionAsync(ViewModel item) {
+        if (item.Id is not default(Id))
+            await commandService
+                .TryUpdateAsync(item.Id, x => Response.Success(x.WithSuspension(!item.Suspended)))
+                .OnSuccessAsync(_ => OnInitializedAsync())
                 .OnFailureAsync(e => snackbar.Add(e.Message, Severity.Error));
     }
 
