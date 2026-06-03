@@ -1,15 +1,16 @@
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using CesiZen.Domain.Aggregates.Core;
 using FluentResponse;
 using FluentResponse.Interfaces;
 
 namespace CesiZen.Domain.Aggregates.Accounts.ValueObjects;
+
+/// <summary> An account password made out of at least 4 digits, 4 lower cases, and 4 upper cases. </summary>
 public readonly record struct Password(string Hash) {
 
-    private const int PBKDF2_ITER_COUNT    = 1000;  // default for Rfc2898DeriveBytes
-    private const int PBKDF2_SUBKEY_LENGTH = 256/8; // 256 bits
-    private const int SALT_SIZE            = 128/8; // 128 bits
+    private const int PBKDF2_ITER_COUNT    = 100_000; 
+    private const int PBKDF2_SUBKEY_LENGTH = 256/8;
+    private const int SALT_SIZE            = 128/8;
 
     /* =======================
         * HASHED PASSWORD FORMATS
@@ -29,17 +30,23 @@ public readonly record struct Password(string Hash) {
             string.Concat(value.Where(char.IsAsciiDigit)).Length < 4
         ) return Response.Failure<Password>(new InvariantException<Password>("Un mot de passe doit contenir au moins 4 minuscules, 4 majuscules, et 4 chiffres !"));
 
-        // Produce a version 0 (see comment above) text hash.
-        byte[] salt;
-        byte[] subkey;
-        using (var deriveBytes = new Rfc2898DeriveBytes(value, SALT_SIZE, PBKDF2_ITER_COUNT, HashAlgorithmName.SHA256)) {
-            salt = deriveBytes.Salt;
-            subkey = deriveBytes.GetBytes(PBKDF2_SUBKEY_LENGTH);
-        }
+        // Generate salt
+        var salt = new byte[SALT_SIZE];
+        RandomNumberGenerator.Fill(salt);
+
+        // Derive subkey
+        var subkey = Rfc2898DeriveBytes.Pbkdf2(
+            password: value,
+            salt: salt,
+            iterations: PBKDF2_ITER_COUNT,
+            hashAlgorithm: HashAlgorithmName.SHA256,
+            outputLength: PBKDF2_SUBKEY_LENGTH
+        );
 
         var outputBytes = new byte[1 + SALT_SIZE + PBKDF2_SUBKEY_LENGTH];
-        Buffer.BlockCopy(salt, 0, outputBytes, 1, SALT_SIZE);
-        Buffer.BlockCopy(subkey, 0, outputBytes, 1 + SALT_SIZE, PBKDF2_SUBKEY_LENGTH);
+        outputBytes[0] = 0x00;
+        Buffer.BlockCopy(salt,   0, outputBytes, 1,               SALT_SIZE);
+        Buffer.BlockCopy(subkey, 0, outputBytes, 1 + SALT_SIZE,   PBKDF2_SUBKEY_LENGTH);
 
         return Response.Success(new Password(Convert.ToBase64String(outputBytes)));
     }
@@ -56,38 +63,28 @@ public readonly record struct Password(string Hash) {
 
         var hashedPasswordBytes = Convert.FromBase64String(this.Hash);
 
-        // Verify a version 0 (see comment above) text hash.
-        if (hashedPasswordBytes.Length != (1 + SALT_SIZE + PBKDF2_SUBKEY_LENGTH) || hashedPasswordBytes[0] != 0x00)
-            // Wrong length or version header.
-            return Response.Failure();
+        // Verify a version 0 text hash
+        if (hashedPasswordBytes.Length != (1 + SALT_SIZE + PBKDF2_SUBKEY_LENGTH) ||
+            hashedPasswordBytes[0] != 0x00
+        ) return Response.Failure("Mot de passe invalide !");
 
         var salt = new byte[SALT_SIZE];
         Buffer.BlockCopy(hashedPasswordBytes, 1, salt, 0, SALT_SIZE);
+
         var storedSubkey = new byte[PBKDF2_SUBKEY_LENGTH];
         Buffer.BlockCopy(hashedPasswordBytes, 1 + SALT_SIZE, storedSubkey, 0, PBKDF2_SUBKEY_LENGTH);
 
-        byte[] generatedSubkey;
-        using (var deriveBytes = new Rfc2898DeriveBytes(password, salt, PBKDF2_ITER_COUNT, HashAlgorithmName.SHA256))
-            generatedSubkey = deriveBytes.GetBytes(PBKDF2_SUBKEY_LENGTH);
+        // Derive subkey
+        var generatedSubkey = Rfc2898DeriveBytes.Pbkdf2(
+            password: password,
+            salt: salt,
+            iterations: PBKDF2_ITER_COUNT,
+            hashAlgorithm: HashAlgorithmName.SHA256,
+            outputLength: PBKDF2_SUBKEY_LENGTH
+        );
 
-        return ByteArraysEqual(storedSubkey, generatedSubkey)
+        return CryptographicOperations.FixedTimeEquals(storedSubkey, generatedSubkey)
             ? Response.Success()
             : Response.Failure("Mot de passe incorrect !");
-    }
-
-    // Compares two byte arrays for equality. The method is specifically written so that the loop is not optimized.
-    [MethodImpl(MethodImplOptions.NoOptimization)]
-    private static bool ByteArraysEqual(byte[] a, byte[] b)  {
-        if (ReferenceEquals(a, b))
-            return true;
-
-        if (a == null || b == null || a.Length != b.Length)
-            return false;
-
-        var areSame = true;
-        for (var i = 0; i < a.Length; i++)
-            areSame &= a[i] == b[i];
-
-        return areSame;
     }
 }

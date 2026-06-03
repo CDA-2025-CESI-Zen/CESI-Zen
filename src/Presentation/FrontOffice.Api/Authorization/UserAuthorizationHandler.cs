@@ -18,7 +18,7 @@ public class UserAuthorizationHandler(
             Id.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) &&
             Id.TryParse((context.Resource as HttpContext)?.Request.RouteValues["id"]?.ToString(), out var parameterId) &&
             userId == parameterId &&
-            await repository.AnyAsync(x => x.Id == userId && !x.IsAnonymous)
+            await repository.AnyAsync(x => x.Id == userId && !x.IsAnonymous && !x.IsSuspended)
         ) context.Succeed(requirement);
 
         await Task.CompletedTask;

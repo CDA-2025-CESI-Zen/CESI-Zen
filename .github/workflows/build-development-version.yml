@@ -1,13 +1,9 @@
 name: Development version
 
 on:
-  pull_request:
+  push:
     branches:
       - develop
-    types:
-      - opened
-      - synchronize
-      - reopened
 
 permissions:
   contents: read
@@ -33,31 +29,60 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Restore/Build/Test
+        run: dotnet test --configuration Release --verbosity normal --logger trx --collect:"XPlat Code Coverage"
 
-      - name: Clean the solution
-        run: dotnet clean
+      - name: Combine Coverage Reports
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.2.4
+        with:
+          reports: "**/*.cobertura.xml"
+          targetdir: "${{ github.workspace }}"
+          reporttypes: "Cobertura;Html"
+          verbosity: "Info"
+          title: "Rapport de tests"
+          tag: "${{ github.run_number }}_${{ github.run_id }}"
+          toolpath: "reportgeneratortool"
 
-      - name: Build the solution
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run tests
-        run: |
-          mkdir -p TestResults
-
-          dotnet test \
-            --configuration Release \
-            --logger "trx;LogFileName=test-results.trx" \
-            --results-directory TestResults
-
-      - name: Upload test results artifact
+      - name: Upload Combined Coverage XML
         uses: actions/upload-artifact@v4
-        if: always()
+        with:
+          name: coverage
+          path: ${{ github.workspace }}/Cobertura.xml
+          retention-days: 5
+
+      - name: Publish Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: "Cobertura.xml"
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: false
+          indicators: true
+          output: both
+          thresholds: "10 30"
+
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: Upload Test Result Files
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: TestResults/**/*.trx
+          path: ${{ github.workspace }}/**/TestResults/**/*
+          retention-days: 5
 
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2.16.1
+        if: always()
+        with:
+          trx_files: "${{ github.workspace }}/**/*.trx"
+          
   docker:
     name: Build & push development images
     runs-on: ubuntu-latest
@@ -133,19 +158,15 @@ jobs:
       - name: Update image digests
         run: |
           cd gitops
-  
-          FRONT_DIGEST="${{ needs.docker.outputs.front_digest }}"
-          BACK_DIGEST="${{ needs.docker.outputs.back_digest }}"
-  
+          FILE=overlays/dev/kustomization.yaml
+
           yq -i '
-            (.images[] | select(.name == "ghcr.io/'"${{ github.repository_owner }}"'/frontoffice-api")).digest = strenv(FRONT_DIGEST)
-          ' overlays/dev/kustomization.yaml
-  
+            (.images[] | select(.name == "ghcr.io/cda-2025-cesi-zen/frontoffice-api")).digest = "${{ needs.docker.outputs.front_digest }}"
+          ' "$FILE"
+
           yq -i '
-            (.images[] | select(.name == "ghcr.io/'"${{ github.repository_owner }}"'/backoffice")).digest = strenv(BACK_DIGEST)
-          ' overlays/dev/kustomization.yaml
-  
-          cat overlays/dev/kustomization.yaml
+            (.images[] | select(.name == "ghcr.io/cda-2025-cesi-zen/backoffice")).digest = "${{ needs.docker.outputs.back_digest }}"
+          ' "$FILE"
   
       - name: Commit changes
         run: |
@@ -158,6 +179,6 @@ jobs:
   
           git diff --cached --quiet && exit 0
   
-          git commit -m "chore(dev): update image digests"
+          git commit -m "Updated image digests"
   
           git push

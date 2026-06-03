@@ -4,6 +4,8 @@ using FluentResponse;
 using FluentResponse.Interfaces;
 
 namespace CesiZen.Domain.Aggregates.Accounts.ValueObjects;
+
+/// <summary> A mail address for any users. </summary>
 public class UserMailAddress(string value) : MailAddress(value) {
     public static IResponse<UserMailAddress> TryCreate(string value) {
 
